@@ -3,23 +3,35 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private GameObject creditsPanel; // assign in Inspector
+
     // Called when clicking Start Game
     public void StartGame()
     {
-        // Load your first gameplay scene (set in Build Settings)
-        SceneManager.LoadScene("GameScene"); 
+        Debug.Log("[MainMenu] StartGame clicked");
+        Time.timeScale = 1f;                   // unpause just in case
+        SceneManager.LoadScene("Tutorial");    // make sure it's in Build Settings
     }
 
-    // Called when clicking Credits
+    // Show credits panel
     public void ShowCredits()
     {
-        SceneManager.LoadScene("CreditsScene");
+        Debug.Log("[MainMenu] ShowCredits clicked");
+        creditsPanel.SetActive(true);
     }
 
-    // Called when clicking Quit
+    // Hide credits panel
+    public void HideCredits()
+    {
+        Debug.Log("[MainMenu] HideCredits clicked");
+        creditsPanel.SetActive(false);
+    }
+
+    // Quit the game
     public void QuitGame()
     {
-        Debug.Log("Quit Game!"); // works in Editor
-        Application.Quit();      // works in build
+        Debug.Log("[MainMenu] QuitGame clicked");
+        Application.Quit(); // only works in build
     }
 }
