@@ -1852,6 +1852,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1745263734}
   m_CullTransparentMesh: 1
+--- !u!1 &1750802607
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1750802609}
+  - component: {fileID: 1750802608}
+  m_Layer: 0
+  m_Name: StartMenuMusic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1750802608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750802607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c7d912e85e4478287163e4f2dccafb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneMusicCue
+  musicClip: {fileID: 8300000, guid: 24d2b88a40977400ea4b28009d36593e, type: 3}
+  fadeSeconds: 1.5
+  volume: 0.8
+  stopOnDisable: 0
+--- !u!4 &1750802609
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750802607}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.22763, y: 3.46676, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1823459455
 GameObject:
   m_ObjectHideFlags: 0
@@ -2320,6 +2368,63 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1001 &7078246926816302624
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1878184600878310570, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_Name
+      value: MusicManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.22763
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.46676
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502193452781029766, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 511fa922eae17445fbdcad025ef4d514, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2329,3 +2434,5 @@ SceneRoots:
   - {fileID: 1543148651}
   - {fileID: 1690633479}
   - {fileID: 1726332666}
+  - {fileID: 7078246926816302624}
+  - {fileID: 1750802609}
