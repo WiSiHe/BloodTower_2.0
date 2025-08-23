@@ -1883,8 +1883,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneMusicCue
   musicClip: {fileID: 8300000, guid: 24d2b88a40977400ea4b28009d36593e, type: 3}
   fadeSeconds: 1.5
-  volume: 0.8
-  stopOnDisable: 0
+  volume: 0.2
+  stopOnDisable: 1
 --- !u!4 &1750802609
 Transform:
   m_ObjectHideFlags: 0
