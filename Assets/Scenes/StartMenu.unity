@@ -1672,6 +1672,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1690633479}
   - component: {fileID: 1690633478}
+  - component: {fileID: 1690633480}
   m_Layer: 0
   m_Name: MenuManager
   m_TagString: Untagged
@@ -1692,7 +1693,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   creditsPanel: {fileID: 1370437347}
-  gameplaySceneName: Tutorial
+  introSceneName: Intro
 --- !u!4 &1690633479
 Transform:
   m_ObjectHideFlags: 0
@@ -1708,6 +1709,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1690633480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690633477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad428b671c65c4c8cbc48e8f1f40cdd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
+  creditsPanel: {fileID: 1370437347}
+  startButton: {fileID: 586386963}
+  creditsButton: {fileID: 1627252184}
+  quitButton: {fileID: 537793988}
+  backButton: {fileID: 1869847391}
+  introSceneName: Intro
+  moveDeadzone: 0.5
+  repeatDelay: 0.2
 --- !u!1 &1745263734
 GameObject:
   m_ObjectHideFlags: 0
