@@ -7,6 +7,8 @@ public class LevelExit : MonoBehaviour
     [Tooltip("Exact scene name (must be in Build Settings).")]
     [SerializeField] private string nextSceneName = "Tutorial";
 
+    [SerializeField] AudioSource exitAudio;
+
     [Tooltip("Only the object with this tag can trigger the exit.")]
     [SerializeField] private string targetTag = "Player";
 
