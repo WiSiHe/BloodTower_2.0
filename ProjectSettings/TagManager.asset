@@ -5,11 +5,12 @@ TagManager:
   serializedVersion: 3
   tags:
   - Coin
+  - Ground
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Ground
   - Water
   - UI
   - 
