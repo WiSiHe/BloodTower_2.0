@@ -15,8 +15,8 @@ public class PlayerController : MonoBehaviour
     public bool isoFourWay = false;
 
     [Header("Refs")]
-    [SerializeField] private GroundCheck2D groundCheck;
-
+    [SerializeField] private GroundCheck2D groundCheck; // assign in Inspector (or auto-found in Awake)
+    [SerializeField] AudioSource jumpAudio; 
     private Rigidbody2D rb;
     private Controls controls;
     private Vector2 move;
@@ -32,6 +32,9 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         if (groundCheck == null)
             groundCheck = GetComponentInChildren<GroundCheck2D>(true);
+        if (jumpAudio == null)
+            jumpAudio = GetComponentInChildren<AudioSource>();
+        // <-- Auto-assign here
     }
 
     void OnEnable()
@@ -100,7 +103,9 @@ public class PlayerController : MonoBehaviour
         if (canJump && !isIsometric && groundCheck != null && groundCheck.IsGrounded)
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            if (animator) animator.SetBool("isJumping", true);
+            animator.SetBool("isJumping", true); // optional
+            jumpAudio.Play();
+
         }
     }
 
@@ -146,3 +151,4 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
+ 
