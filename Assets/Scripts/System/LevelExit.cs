@@ -10,6 +10,7 @@ public class LevelExit : MonoBehaviour
     [Header("Behavior")]
     [Tooltip("Optional delay before loading (seconds).")]
     [SerializeField] private float loadDelay = 0f;
+    [SerializeField] AudioSource exitAudio;
 
     [Tooltip("Only the object with this tag can trigger the exit.")]
     [SerializeField] private string targetTag = "Player";
@@ -36,6 +37,8 @@ public class LevelExit : MonoBehaviour
                 if (!string.IsNullOrEmpty(file)) nextSceneName = file;
             }
         }
+         if (exitAudio == null)
+            exitAudio = GetComponentInChildren<AudioSource>();
     }
 #endif
 
