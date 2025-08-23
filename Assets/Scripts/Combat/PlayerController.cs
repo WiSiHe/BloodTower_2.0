@@ -10,11 +10,14 @@ public class PlayerController : MonoBehaviour{
     private Controls controls;
     private Vector2 move;
     private bool isGrounded = true; // Simple grounded check
+    private bool isFacingRight = true; // Track player facing direction
+    private Animator animator; // Reference to Animator
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         controls = new Controls();
+        animator = GetComponent<Animator>(); // Get Animator component
 
         // Read Move action
         controls.Player.Move.performed += ctx => move = ctx.ReadValue<Vector2>();
@@ -28,7 +31,11 @@ public class PlayerController : MonoBehaviour{
 
     void FixedUpdate()
     {
+        FlipSprite(); // Flip sprite based on movement direction
         rb.MovePosition(rb.position + move * moveSpeed * Time.fixedDeltaTime);
+
+        // Update Animator parameters
+        animator.SetFloat("xVelocity", move.magnitude); // Set Speed parameter
     }
 
     void Jump()
@@ -37,6 +44,9 @@ public class PlayerController : MonoBehaviour{
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             isGrounded = false;
+
+            // Update Animator parameter
+            // animator.SetBool("IsJumping", true);
         }
     }
 
@@ -46,6 +56,24 @@ public class PlayerController : MonoBehaviour{
         if (collision.contacts.Length > 0 && collision.contacts[0].normal.y > 0.5f)
         {
             isGrounded = true;
+
+            // Update Animator parameter
+            // animator.SetBool("IsJumping", false);
         }
+    }
+
+    // Flip the player sprite based on movement direction
+    void FlipSprite()
+    {
+       if (move.x > 0 && !isFacingRight || move.x < 0 && isFacingRight)
+       {
+           isFacingRight = !isFacingRight;
+           Vector3 scale = transform.localScale;
+           scale.x *= -1f;
+           transform.localScale = scale;
+       }
+       
+       
+       
     }
 }
