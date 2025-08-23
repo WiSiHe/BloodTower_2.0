@@ -852,12 +852,20 @@ PrefabInstance:
       value: 1.084984
       objectReference: {fileID: 0}
     - target: {fileID: 204136054715535892, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 26.536
+      objectReference: {fileID: 0}
+    - target: {fileID: 204136054715535892, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.9224
+      objectReference: {fileID: 0}
+    - target: {fileID: 204136054715535892, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.23
+      value: -8.0382
       objectReference: {fileID: 0}
     - target: {fileID: 204136054715535892, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -7.33
+      value: -7.3688
       objectReference: {fileID: 0}
     - target: {fileID: 204136054715535892, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -894,6 +902,10 @@ PrefabInstance:
     - target: {fileID: 6559784700883439633, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
       propertyPath: m_Name
       value: InvisibleGround
+      objectReference: {fileID: 0}
+    - target: {fileID: 6559784700883439633, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_TagString
+      value: Ground
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
