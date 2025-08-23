@@ -32,6 +32,8 @@ public class LevelExit : MonoBehaviour
                 if (!string.IsNullOrEmpty(file)) nextSceneName = file;
             }
         }
+         if (exitAudio == null)
+            exitAudio = GetComponentInChildren<AudioSource>();
     }
 #endif
 

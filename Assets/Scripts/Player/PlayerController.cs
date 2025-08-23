@@ -8,16 +8,17 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 6f;
     public float jumpForce = 10f;
     public bool isIsometric = false;
+    public bool canJump = true; // <--- NEW toggle
 
     [Header("Isometric")]
     public float isoFaceDeadzone = 0.15f;
     public bool isoFourWay = false;
 
     [Header("Refs")]
-    [SerializeField] private GroundCheck2D groundCheck;
-
+    [SerializeField] private GroundCheck2D groundCheck; // assign in Inspector (or auto-found in Awake)
+    [SerializeField] AudioSource jumpAudio; 
     private Rigidbody2D rb;
-    private Controls controls;                 // <- may be null until OnEnable
+    private Controls controls;
     private Vector2 move;
     private Vector2 lastNonZeroMove = Vector2.right;
     private bool isFacingRight = true;
@@ -31,11 +32,13 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         if (groundCheck == null)
             groundCheck = GetComponentInChildren<GroundCheck2D>(true);
+        if (jumpAudio == null)
+            jumpAudio = GetComponentInChildren<AudioSource>();
+        // <-- Auto-assign here
     }
 
     void OnEnable()
     {
-        // Lazy init + (re)bind callbacks safely
         if (controls == null)
         {
             controls = new Controls();
@@ -48,14 +51,12 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
-        // Guard against null during domain reload / recompiles
         if (controls != null)
             controls.Disable();
     }
 
     void OnDestroy()
     {
-        // Clean up input asset
         if (controls != null)
         {
             controls.Player.Move.performed -= ctx => move = ctx.ReadValue<Vector2>();
@@ -98,10 +99,13 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
-        if (!isIsometric && groundCheck != null && groundCheck.IsGrounded)
+        // Now checks both isIsometric and canJump
+        if (canJump && !isIsometric && groundCheck != null && groundCheck.IsGrounded)
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            if (animator) animator.SetBool("isJumping", true);
+            animator.SetBool("isJumping", true); // optional
+            jumpAudio.Play();
+
         }
     }
 
@@ -147,3 +151,4 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
+ 
