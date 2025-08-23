@@ -220,6 +220,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 4689636987630461615, guid: ea265857d97204e5493c785a6ba8bb18, type: 3}
+    - target: {fileID: 1246851333960423559, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1889358630879728923, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.1436281
@@ -265,19 +269,31 @@ PrefabInstance:
       value: 4.84
       objectReference: {fileID: 0}
     - target: {fileID: 2790571888408417512, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2790571888408417512, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Offset.x
       value: -0.06
+      objectReference: {fileID: 0}
+    - target: {fileID: 7364795137129322710, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Name
       value: Hero
+      objectReference: {fileID: 0}
+    - target: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
-      insertIndex: -1
+      insertIndex: 5
       addedObject: {fileID: 996756019}
   m_SourcePrefab: {fileID: 100100000, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
 --- !u!1 &494099172

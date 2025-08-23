@@ -44,8 +44,11 @@ public class PlayerController : MonoBehaviour
         FlipSprite();
 
         // Animator params (guard if missing)
-        if (animator)
+        if (animator){
             animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
+            animator.SetFloat("yVelocity", rb.linearVelocity.y);
+        }
+            
     }
 
     void Jump()
@@ -54,7 +57,15 @@ public class PlayerController : MonoBehaviour
         if (groundCheck != null && groundCheck.IsGrounded)
         {
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            // if (animator) animator.SetBool("IsJumping", true);
+            animator.SetBool("isJumping", true); // optional
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if  (groundCheck != null && groundCheck.IsGrounded)
+        {
+            animator.SetBool("isJumping", false);
         }
     }
 
