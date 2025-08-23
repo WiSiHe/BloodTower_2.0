@@ -3,35 +3,52 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private GameObject creditsPanel; // assign in Inspector
+    [Header("UI References (optional)")]
+    [SerializeField] private GameObject creditsPanel; // assign if you use a credits panel
 
-    // Called when clicking Start Game
+    [Header("Scene Names")]
+    [SerializeField] private string introSceneName = "Intro";   // MainMenu -> Intro
+
+    // === Buttons ===
     public void StartGame()
     {
-        Debug.Log("[MainMenu] StartGame clicked");
-        Time.timeScale = 1f;                   // unpause just in case
-        SceneManager.LoadScene("Tutorial");    // make sure it's in Build Settings
+        Debug.Log("[MainMenu] StartGame clicked -> loading Intro");
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(introSceneName); // <-- make sure this is "Intro"
     }
 
-    // Show credits panel
     public void ShowCredits()
     {
-        Debug.Log("[MainMenu] ShowCredits clicked");
+        if (!creditsPanel)
+        {
+            Debug.LogWarning("[MainMenu] ShowCredits clicked but no creditsPanel assigned.");
+            return;
+        }
+        var cg = creditsPanel.GetComponent<CanvasGroup>();
+        if (cg) { cg.alpha = 1f; cg.blocksRaycasts = true; cg.interactable = true; }
         creditsPanel.SetActive(true);
+        Debug.Log("[MainMenu] CreditsPanel shown");
     }
 
-    // Hide credits panel
     public void HideCredits()
     {
-        Debug.Log("[MainMenu] HideCredits clicked");
+        if (!creditsPanel) return;
+        var cg = creditsPanel.GetComponent<CanvasGroup>();
+        if (cg) { cg.interactable = false; cg.blocksRaycasts = false; cg.alpha = 0f; }
         creditsPanel.SetActive(false);
+        Debug.Log("[MainMenu] CreditsPanel hidden");
     }
 
-    // Quit the game
     public void QuitGame()
     {
-        Debug.Log("[MainMenu] QuitGame clicked");
-        Application.Quit(); // only works in build
+#if UNITY_EDITOR
+        Debug.Log("[MainMenu] QuitGame (Editor) — stopping Play Mode.");
+        UnityEditor.EditorApplication.isPlaying = false;
+#elif UNITY_WEBGL
+        Debug.Log("[MainMenu] QuitGame (WebGL) — not supported.");
+#else
+        Debug.Log("[MainMenu] QuitGame — exiting application.");
+        Application.Quit();
+#endif
     }
 }
