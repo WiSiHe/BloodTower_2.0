@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class LevelExit : MonoBehaviour
@@ -6,11 +6,6 @@ public class LevelExit : MonoBehaviour
     [Header("Next Level")]
     [Tooltip("Exact scene name (must be in Build Settings).")]
     [SerializeField] private string nextSceneName = "Tutorial";
-
-    [Header("Behavior")]
-    [Tooltip("Optional delay before loading (seconds).")]
-    [SerializeField] private float loadDelay = 0f;
-    [SerializeField] AudioSource exitAudio;
 
     [Tooltip("Only the object with this tag can trigger the exit.")]
     [SerializeField] private string targetTag = "Player";
@@ -59,15 +54,7 @@ public class LevelExit : MonoBehaviour
 
         _used = true;
         onTriggered?.Invoke();
-
-        if (loadDelay <= 0f)
-        {
-            LoadNext();
-        }
-        else
-        {
-            Invoke(nameof(LoadNext), loadDelay);
-        }
+        LoadNext();
     }
 
     private void LoadNext()
@@ -83,7 +70,37 @@ public class LevelExit : MonoBehaviour
         // GameSession.Instance?.SetLastLevel(nextSceneName);
 
         Time.timeScale = 1f; // safety
-        SceneManager.LoadScene(nextSceneName);
+
+        var player = GameObject.FindGameObjectWithTag(targetTag);
+        if (player != null)
+        {
+            var pc = player.GetComponent<PlayerController>();
+            if (pc) pc.enabled = false;
+
+            var rb = player.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+        #if UNITY_6000_OR_NEWER
+            rb.linearVelocity = Vector2.zero;
+        #else
+                rb.linearVelocity = Vector2.zero;
+        #endif
+                rb.constraints = RigidbodyConstraints2D.FreezeAll;
+            }
+        }
+
+        // Try to use the SceneFader prefab if it's present; otherwise load directly.
+        var fader = FindObjectOfType<SceneFader>();
+        if (fader != null)
+        {
+            // Use your existing loadDelay as the fade duration as well.
+            fader.FadeAndLoad(nextSceneName);
+        }
+        else
+        {
+            // Fallback: no fader in scene
+            SceneManager.LoadScene(nextSceneName);
+        }
     }
 
     // Editor gizmo so you can see the trigger volume easily
