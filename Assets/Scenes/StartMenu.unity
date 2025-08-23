@@ -1761,7 +1761,13 @@ MonoBehaviour:
   tutorialSceneName: Tutorial
   startMenuSceneName: StartMenu
   gameOverSceneName: GameOver
-  score: 10
+  maxHearts: 3
+  hearts: 3
+  sanity: 100
+  runTime: 0
+  timerEnabled: 0
+  runHasStarted: 0
+  score: 1
 --- !u!4 &1726332666
 Transform:
   m_ObjectHideFlags: 0
@@ -1836,7 +1842,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: -5979667655934918530, guid: 805fba258d4244b6893232da3311f1b1, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

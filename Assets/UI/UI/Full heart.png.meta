@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 81083aa225e51c74184e5c3aad8b500d
+guid: 15082f341395e47829021c3fd78c1daf
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2600754557079541381
-    second: DungeonDoor_0
+      213: 3256862523450280896
+    second: Full heart_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -97,7 +97,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: WebGL
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -110,7 +110,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
+    buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -139,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: DungeonDoor_0
+      name: Full heart_0
       rect:
         serializedVersion: 2
-        x: 165
-        y: 87
-        width: 801
-        height: 860
+        x: 0
+        y: 0
+        width: 200
+        height: 200
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b79ab4d728348ebd0800000000000000
-      internalID: -2600754557079541381
+      spriteID: 0cb4980a533b23d20800000000000000
+      internalID: 3256862523450280896
       vertices: []
       indices: 
       edges: []
@@ -174,7 +174,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      DungeonDoor_0: -2600754557079541381
+      Full heart_0: 3256862523450280896
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
