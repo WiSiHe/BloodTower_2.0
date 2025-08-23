@@ -4,8 +4,10 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Coin
   - Ground
+  - Arrow
+  - Coin
+  - Monster
   layers:
   - Default
   - TransparentFX

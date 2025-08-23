@@ -34,10 +34,9 @@ public class MonsterMover : MonoBehaviour
     }
 
     // Clean up when off any camera
-    void OnBecameInvisible()
-    {
-        // make sure it actually moved into view at least once (optional guard)
-        if (transform.position.y < Camera.main.transform.position.y)
-            Destroy(gameObject);
-    }
+   void OnBecameInvisible()
+{
+    Destroy(gameObject);
+}
+
 }
