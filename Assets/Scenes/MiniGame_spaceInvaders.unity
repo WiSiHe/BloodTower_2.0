@@ -538,6 +538,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       insertIndex: -1
       addedObject: {fileID: 976635544}
+    - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 976635545}
   m_SourcePrefab: {fileID: 100100000, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
 --- !u!1001 &758676594
 PrefabInstance:
@@ -911,6 +914,22 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &976635545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976635527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06838b6d68d7e0ae4ae70f307f31230c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  startingLives: 3
+  invulnDuration: 1
+  blinkTotal: 0.25
+  blinkStep: 0.05
 --- !u!1 &1014596852
 GameObject:
   m_ObjectHideFlags: 0

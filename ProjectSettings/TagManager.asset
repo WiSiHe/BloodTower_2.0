@@ -9,6 +9,7 @@ TagManager:
   - Coin
   - Monster
   - Boss
+  - Fireball
   layers:
   - Default
   - TransparentFX
