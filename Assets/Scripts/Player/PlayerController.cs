@@ -8,7 +8,13 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 6f;
     public float jumpForce = 10f;
     public bool isIsometric = false;
-    public bool canJump = true; // <--- NEW toggle
+    public bool canJump = true;
+
+    [Header("Double Jump")]
+    [Tooltip("If true, allows an additional jump while airborne.")]
+    public bool doubleJumpEnabled = true;
+    [Tooltip("How many extra jumps allowed in the air (1 = classic double jump).")]
+    public int extraAirJumps = 1;
 
     [Header("Isometric")]
     public float isoFaceDeadzone = 0.15f;
@@ -16,13 +22,17 @@ public class PlayerController : MonoBehaviour
 
     [Header("Refs")]
     [SerializeField] private GroundCheck2D groundCheck; // assign in Inspector (or auto-found in Awake)
-    [SerializeField] AudioSource jumpAudio; 
+    [SerializeField] private AudioSource jumpAudio;
     private Rigidbody2D rb;
     private Controls controls;
     private Vector2 move;
     private Vector2 lastNonZeroMove = Vector2.right;
     private bool isFacingRight = true;
     private Animator animator;
+
+    // Jump state
+    private bool wasGrounded = false;
+    private int airJumpsLeft = 0;
 
     private enum IsoDir { N = 0, NE = 1, E = 2, SE = 3, S = 4, SW = 5, W = 6, NW = 7 }
 
@@ -34,7 +44,6 @@ public class PlayerController : MonoBehaviour
             groundCheck = GetComponentInChildren<GroundCheck2D>(true);
         if (jumpAudio == null)
             jumpAudio = GetComponentInChildren<AudioSource>();
-        // <-- Auto-assign here
     }
 
     void OnEnable()
@@ -59,6 +68,7 @@ public class PlayerController : MonoBehaviour
     {
         if (controls != null)
         {
+            // Note: Unsubscribing inline lambdas will not detach; keeping for parity with your original.
             controls.Player.Move.performed -= ctx => move = ctx.ReadValue<Vector2>();
             controls.Player.Move.canceled -= ctx => move = Vector2.zero;
             controls.Player.Jump.performed -= ctx => Jump();
@@ -69,55 +79,107 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        bool groundedNow = groundCheck != null && groundCheck.IsGrounded;
+
+        // Grounded state transition: reset air jumps when you touch ground
+        if (groundedNow && !wasGrounded)
+        {
+            airJumpsLeft = Mathf.Max(0, extraAirJumps);
+            if (animator) animator.SetBool("isJumping", false);
+        }
+        wasGrounded = groundedNow;
+
         if (isIsometric)
         {
+#if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = move * moveSpeed;
-
+#else
+            rb.velocity = move * moveSpeed;
+#endif
             if (move.sqrMagnitude > isoFaceDeadzone * isoFaceDeadzone)
                 lastNonZeroMove = move;
 
             if (animator)
             {
+#if UNITY_6000_0_OR_NEWER
                 var v = move.sqrMagnitude > isoFaceDeadzone * isoFaceDeadzone ? move : lastNonZeroMove;
                 int dirIndex = (int)GetIsoDirection(v, isoFourWay);
                 animator.SetInteger("dirIndex", dirIndex);
                 animator.SetFloat("speed", rb.linearVelocity.magnitude);
+#else
+                var v = move.sqrMagnitude > isoFaceDeadzone * isoFaceDeadzone ? move : lastNonZeroMove;
+                int dirIndex = (int)GetIsoDirection(v, isoFourWay);
+                animator.SetInteger("dirIndex", dirIndex);
+                animator.SetFloat("speed", rb.velocity.magnitude);
+#endif
             }
         }
         else
         {
+            // Side-scroller horizontal
+#if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = new Vector2(move.x * moveSpeed, rb.linearVelocity.y);
+            float xVel = rb.linearVelocity.x;
+            float yVel = rb.linearVelocity.y;
+#else
+            rb.velocity = new Vector2(move.x * moveSpeed, rb.velocity.y);
+            float xVel = rb.velocity.x;
+            float yVel = rb.velocity.y;
+#endif
             FlipSprite();
 
             if (animator)
             {
-                animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
-                animator.SetFloat("yVelocity", rb.linearVelocity.y);
+                animator.SetFloat("xVelocity", Mathf.Abs(xVel));
+                animator.SetFloat("yVelocity", yVel);
             }
         }
     }
 
     void Jump()
     {
-        // Now checks both isIsometric and canJump
-        if (canJump && !isIsometric && groundCheck != null && groundCheck.IsGrounded)
-        {
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            animator.SetBool("isJumping", true); // optional
-            jumpAudio.Play();
+        // Only in side-scroller mode and if jump allowed at all
+        if (isIsometric || !canJump) return;
 
+        bool groundedNow = groundCheck != null && groundCheck.IsGrounded;
+
+        // Ground jump
+        if (groundedNow)
+        {
+            DoJump();
+            // Reset air jumps for the upcoming airtime
+            airJumpsLeft = Mathf.Max(0, extraAirJumps);
+            return;
+        }
+
+        // Air jump(s)
+        if (doubleJumpEnabled && airJumpsLeft > 0)
+        {
+            // Optional: zero out vertical velocity for consistent second jump feel
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+#else
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
+#endif
+            DoJump();
+            airJumpsLeft--;
         }
     }
 
-    void OnTriggerEnter2D(Collider2D collision)
+    void DoJump()
     {
-        if (groundCheck != null && groundCheck.IsGrounded)
-            if (animator) animator.SetBool("isJumping", false);
+        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        if (animator) animator.SetBool("isJumping", true);
+        if (jumpAudio) jumpAudio.Play();
     }
 
     void FlipSprite()
     {
+#if UNITY_6000_0_OR_NEWER
         float x = rb.linearVelocity.x;
+#else
+        float x = rb.velocity.x;
+#endif
         if ((x > 0f && !isFacingRight) || (x < 0f && isFacingRight))
         {
             isFacingRight = !isFacingRight;
@@ -151,4 +213,3 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
- 
