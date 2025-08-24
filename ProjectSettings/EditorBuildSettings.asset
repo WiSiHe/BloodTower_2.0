@@ -30,14 +30,14 @@ EditorBuildSettings:
     path: Assets/Scenes/IsometricHall.unity
     guid: 833b197f152d0e540b4efd321824fbd7
   - enabled: 1
-    path: Assets/Scenes/Hallway.unity
-    guid: 5179ecf72ac2f4a0096957db7d9b1767
+    path: Assets/Scenes/BellHop.unity
+    guid: c4ba1245d20776741bf138673eb08b4c
   - enabled: 1
     path: Assets/Scenes/MiniGame_spaceInvaders.unity
     guid: e1bbaedaf751d0f23a11d015da8f6653
   - enabled: 1
-    path: Assets/Scenes/BellHop.unity
-    guid: c4ba1245d20776741bf138673eb08b4c
+    path: Assets/Scenes/Hallway.unity
+    guid: 5179ecf72ac2f4a0096957db7d9b1767
   - enabled: 1
     path: Assets/Scenes/Victory_Evil.unity
     guid: 0af208d6e2c86455998d5504fc929e29
