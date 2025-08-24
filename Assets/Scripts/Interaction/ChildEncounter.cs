@@ -25,10 +25,20 @@ public class ChildEncounter : MonoBehaviour
     [Header("Optional: player control")]
     [Tooltip("Disable player controls while the prompt is open (looks up a MonoBehaviour on the Player).")]
     [SerializeField] private string playerControllerComponentName = "PlayerController";
+    public Animator playerAnimator;
 
     private bool used;
     private GameObject playerGO;
     private MonoBehaviour cachedController;
+
+    void Start()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerAnimator = player.GetComponent<Animator>();
+        }
+    }
 
     private void Reset()
     {
@@ -160,11 +170,17 @@ public class ChildEncounter : MonoBehaviour
         if (GameSession.Instance != null)
         {
             if (healHearts > 0) GameSession.Instance.Heal(healHearts);
-            if (Mathf.Abs(sanityPenalty) > 0.01f) GameSession.Instance.AddSanityDelta(sanityPenalty); // negative reduces sanity
+            if (Mathf.Abs(sanityPenalty) > 0.01f) GameSession.Instance.AddSanityDelta(sanityPenalty);
             GameSession.Instance.RecordChildKilled();
         }
 
         HidePrompt();
-        Destroy(gameObject); // remove child from world
+
+        // Trigger on the PLAYER animator
+        if (playerAnimator != null)
+            playerAnimator.SetTrigger("Eat");
+
+        // Now it’s safe to remove the pickup from the world
+        Destroy(gameObject);
     }
 }
