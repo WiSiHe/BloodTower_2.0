@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 840253325989586593}
   - component: {fileID: 2350358073915723660}
   - component: {fileID: 7508540258503644188}
+  - component: {fileID: 560310748998542833}
   m_Layer: 0
   m_Name: Blodprinsen
   m_TagString: Untagged
@@ -182,3 +183,16 @@ MonoBehaviour:
   chaseSpeed: 4
   wanderSpeed: 2
   wanderChangeInterval: 3
+--- !u!114 &560310748998542833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4978774675429373935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d9de12a9ebb745ee9465ea51f4612fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillZone
+  targetTag: Player
