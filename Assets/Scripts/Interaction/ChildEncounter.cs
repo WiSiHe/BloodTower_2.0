@@ -31,7 +31,7 @@ public class ChildEncounter : MonoBehaviour
 
     [Header("Safety / Watchdog")]
     [Tooltip("If the player stays locked longer than this (seconds), auto-unlock.")]
-    [SerializeField] private float maxLockSeconds = 3.0f;
+    [SerializeField] private float maxLockSeconds = 20.0f;
     [Tooltip("Allow keyboard/controller cancel while prompt is up (Esc/B).")]
     [SerializeField] private bool allowQuickCancel = true;
 

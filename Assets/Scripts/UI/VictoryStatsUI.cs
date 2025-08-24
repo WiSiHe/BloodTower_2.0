@@ -1,75 +1,158 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
+using System.Reflection;
 
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
-
+/// Displays victory stats & wires Restart/Quit. Robust to varying GameSession field names.
 public class VictoryStatsUI : MonoBehaviour
 {
-    [Header("Texts (optional)")]
+    [Header("Optional Title (auto-filled from scene if empty)")]
     [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text summaryText;   // multiline text block
+
+    [Header("Stats Texts")]
     [SerializeField] private TMP_Text timeText;
     [SerializeField] private TMP_Text scoreText;
+    [SerializeField] private TMP_Text savedText;
+    [SerializeField] private TMP_Text killedText;
+    [SerializeField] private TMP_Text sanityText;
 
     [Header("Buttons")]
     [SerializeField] private Button restartButton;
     [SerializeField] private Button quitButton;
 
-    [Header("Title Overrides (optional)")]
-    [SerializeField] private string goodTitle    = "Salvation";
-    [SerializeField] private string neutralTitle = "A Lonely Ascent";
-    [SerializeField] private string evilTitle    = "Blood Crown";
+    [Header("Destinations")]
+    [SerializeField] private string tutorialScene  = "Tutorial";
+    [SerializeField] private string startMenuScene = "StartMenu";
+
+    [Header("Score Weights")]
+    [SerializeField] private int timePenaltyPerSecond = 1000;   // lower time is better
+    [SerializeField] private int bonusPerSavedChild   = 1500;
+    [SerializeField] private int penaltyPerKilledChild= 2000;
+    [SerializeField] private int sanityBonusPerPoint  = 40;
+    [SerializeField] private int baseScore            = 120000;
+
+    private void Awake()
+    {
+        if (restartButton) restartButton.onClick.AddListener(OnRestart);
+        if (quitButton)    quitButton.onClick.AddListener(OnQuit);
+    }
+
+    private void OnDestroy()
+    {
+        if (restartButton) restartButton.onClick.RemoveListener(OnRestart);
+        if (quitButton)    quitButton.onClick.RemoveListener(OnQuit);
+    }
 
     private void Start()
     {
         var gs = GameSession.Instance;
 
-        // Detect which ending we’re in by scene name (or put an EndingKind on the scene if you prefer)
-        string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        if (titleText)
+        // Try multiple common names so we don't depend on exact property names.
+        float runSeconds = SafeGetFloat(gs, new[] { "RunTimeSeconds", "ElapsedSeconds", "RunSeconds", "TimerSeconds", "RunTime", "ElapsedTime" }, 0f);
+        int saved   = SafeGetInt(gs, new[] { "ChildrenSaved", "SavedChildren", "KidsSaved" }, 0);
+        int killed  = SafeGetInt(gs, new[] { "ChildrenKilled", "KidsKilled", "KilledChildren" }, 0);
+        int sanity  = SafeGetInt(gs, new[] { "CurrentSanity", "Sanity", "SanityValue", "SanityPercent" }, 50);
+
+        if (timeText)   timeText.text   = $"Time: {FormatTime(runSeconds)}";
+        if (savedText)  savedText.text  = $"Children Saved: {saved}";
+        if (killedText) killedText.text = $"Children Consumed: {killed}";
+        if (sanityText) sanityText.text = $"Sanity: {sanity}";
+
+        long score = baseScore
+                   - Mathf.RoundToInt(runSeconds) * timePenaltyPerSecond
+                   + saved  * bonusPerSavedChild
+                   - killed * penaltyPerKilledChild
+                   + sanity * sanityBonusPerPoint;
+        if (score < 0) score = 0;
+        if (scoreText) scoreText.text = $"Score: {score:N0}";
+
+        if (titleText && string.IsNullOrWhiteSpace(titleText.text))
         {
-            if (scene.Contains("Good"))      titleText.text = goodTitle;
-            else if (scene.Contains("Evil")) titleText.text = evilTitle;
-            else                              titleText.text = neutralTitle;
-        }
-
-        if (gs)
-        {
-            int saved  = gs.ChildrenSaved;
-            int killed = gs.ChildrenKilled;
-            float t    = gs.RunTime;
-            int   mm   = Mathf.FloorToInt(t / 60f);
-            int   ss   = Mathf.FloorToInt(t % 60f);
-
-            if (summaryText)
-                summaryText.text = $"Children saved: {saved}\nChildren… consumed: {killed}";
-
-            if (timeText)  timeText.text  = $"Time: {mm:00}:{ss:00}";
-            if (scoreText) scoreText.text = $"Score: {gs.Score}";
-        }
-
-        var es = UnityEngine.EventSystems.EventSystem.current;
-        if (es && restartButton && restartButton.IsInteractable())
-        {
-            es.SetSelectedGameObject(restartButton.gameObject);
-            restartButton.OnSelect(null);
+            string s = SceneManager.GetActiveScene().name; // e.g., Victory_Good
+            titleText.text = s.Replace("Victory_", "").ToUpperInvariant() + " VICTORY";
         }
     }
 
-    public void OnRestartPressed() => GameSession.Instance?.RestartFromTop();
-    public void OnQuitPressed()    => GameSession.Instance?.QuitToStartMenu();
+    private void OnRestart() => LoadScene(tutorialScene);
+    private void OnQuit()    => LoadScene(startMenuScene);
 
-#if ENABLE_INPUT_SYSTEM
-    private void Update()
+    private void LoadScene(string scene)
     {
-        if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame) OnRestartPressed();
-        if (Gamepad.current  != null && Gamepad.current.aButton.wasPressedThisFrame)   OnRestartPressed();
-
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) OnQuitPressed();
-        if (Gamepad.current  != null && Gamepad.current.bButton.wasPressedThisFrame)     OnQuitPressed();
-    }
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        var fader = Object.FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
+#else
+        var fader = Object.FindObjectOfType<SceneFader>(true);
 #endif
+        Time.timeScale = 1f;
+        if (fader != null) fader.FadeToScene(scene);
+        else SceneManager.LoadScene(scene);
+    }
+
+    private static string FormatTime(float seconds)
+    {
+        int s = Mathf.FloorToInt(seconds);
+        return $"{s / 60:00}:{s % 60:00}";
+    }
+
+    // ---------- Reflection helpers ----------
+    private static int SafeGetInt(object obj, string[] names, int fallback)
+    {
+        if (obj == null) return fallback;
+        var t = obj.GetType();
+        foreach (var n in names)
+        {
+            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
+            if (p != null && p.CanRead)
+            {
+                try { return ConvertToInt(p.GetValue(obj)); } catch { }
+            }
+            var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
+            if (f != null)
+            {
+                try { return ConvertToInt(f.GetValue(obj)); } catch { }
+            }
+        }
+        return fallback;
+    }
+
+    private static float SafeGetFloat(object obj, string[] names, float fallback)
+    {
+        if (obj == null) return fallback;
+        var t = obj.GetType();
+        foreach (var n in names)
+        {
+            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
+            if (p != null && p.CanRead)
+            {
+                try { return ConvertToFloat(p.GetValue(obj)); } catch { }
+            }
+            var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
+            if (f != null)
+            {
+                try { return ConvertToFloat(f.GetValue(obj)); } catch { }
+            }
+        }
+        return fallback;
+    }
+
+    private static int ConvertToInt(object v)
+    {
+        if (v == null) return 0;
+        if (v is int i) return i;
+        if (v is float f) return Mathf.RoundToInt(f);
+        if (v is double d) return Mathf.RoundToInt((float)d);
+        if (int.TryParse(v.ToString(), out var parsed)) return parsed;
+        return 0;
+    }
+
+    private static float ConvertToFloat(object v)
+    {
+        if (v == null) return 0f;
+        if (v is float f) return f;
+        if (v is int i) return i;
+        if (v is double d) return (float)d;
+        if (float.TryParse(v.ToString(), out var parsed)) return parsed;
+        return 0f;
+    }
 }

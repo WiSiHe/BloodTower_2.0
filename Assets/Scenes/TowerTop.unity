@@ -420,6 +420,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1505577222870658403, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
     - target: {fileID: 1889358630879728923, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.5
@@ -478,7 +482,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8701851861330570599, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
       propertyPath: m_Mass
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
       propertyPath: m_Name
@@ -495,6 +499,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 297033830}
+    - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 297033836}
   m_SourcePrefab: {fileID: 100100000, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
 --- !u!1001 &265088997
 PrefabInstance:
@@ -578,16 +585,31 @@ MonoBehaviour:
   accelGain: 40
   maxSpeed: 10
   dirBias: 0.15
-  shoveImpulse: 18
+  velocityDamping: 0.98
+  shoveImpulse: 2
   shoveCooldown: 0.35
   playerDisableSecs: 0.25
   playerTag: Player
-  shoveKingAudio: {fileID: 5389905187545681379, guid: 358c1bfab3a7148a2bbb430db2b5d5df, type: 3}
-  shoveHeroAudio: {fileID: 5389905187545681379, guid: 970168a1ce7864215a50b5007a43ae3d, type: 3}
-  velocityDamping: 0.98
   stuckSpeedThreshold: 0.05
   stuckTime: 0.35
   nudgeImpulse: 2
+--- !u!114 &297033836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 297033824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2800a872a4ff843e7bdd0f4fd4e54d08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossKnockback
+  controllerTypeName: BossKingController
+  defaultDisableSeconds: 0.45
+  minHorizontalSpeed: 9
+  lowFrictionDuringStun: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
+  debugLogs: 1
 --- !u!1001 &360798745
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1014,9 +1036,81 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 297033824}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingMass
+      value: 2.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerMass
+      value: 1.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: lowFriction
+      value: 
+      objectReference: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: parityKills
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerShove
+      value: 
+      objectReference: {fileID: 1796503098}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: endingRouter
       value: 
       objectReference: {fileID: 1075311902}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingMaxSpeed
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingAccelGain
+      value: 28
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: bossController
+      value: 
+      objectReference: {fileID: 297033830}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingShove_Over
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: overpowerKills
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerRelBoost
+      value: 1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingTargetSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingShove_0Kills
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: kingShove_Parity
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerDeltaV_Over
+      value: 6.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerDeltaV_0Kills
+      value: 4.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerDeltaV_Parity
+      value: 5.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerShoveCooldown
+      value: 0.12
+      objectReference: {fileID: 0}
     - target: {fileID: 3822762940601588698, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: m_Name
       value: BossFightManager
@@ -1276,10 +1370,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1187377341449519328, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1187377341449519328, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1187377341449519328, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1187377341449519328, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6559784700883439633, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
       propertyPath: m_Name
       value: InvisibleGround
       objectReference: {fileID: 0}
+    - target: {fileID: 7100382370501208608, guid: 36e72a452e44c3c46afb05e4480133a6, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1302,10 +1416,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c492c7f89cbc46a8a3b95d7aa5859bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShove
-  baseShoveImpulse: 8
-  perChildBonus: 2
+  baseTargetDeltaV: 2
+  deltaVPerChild: 0.5
+  relativeSpeedBoost: 0.4
   shoveCooldown: 0.25
+  pushAssistForce: 30
+  requireApproachForAssist: 1
+  minImpulse: 18
   bossTag: Boss
+  debugLogs: 1
 --- !u!114 &1796503099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1379,6 +1498,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2790571888408417512, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
     - target: {fileID: 7364795137129322710, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Enabled
       value: 1
