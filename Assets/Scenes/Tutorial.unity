@@ -687,7 +687,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25b9b3b720a3b41a6b7a32fd106fcf3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnsureGameSession
-  gameSessionPrefab: {fileID: 399179721949074857, guid: c5b259b68f45b4ceaa973441869f059b, type: 3}
 --- !u!4 &910546255
 Transform:
   m_ObjectHideFlags: 0
@@ -1846,6 +1845,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1396347665783611120, guid: 6acc48ca7219d3e44bb79df25140c353, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4261700548164618089, guid: 6acc48ca7219d3e44bb79df25140c353, type: 3}
       propertyPath: m_LocalPosition.x
       value: -6.1
@@ -1889,6 +1892,14 @@ PrefabInstance:
     - target: {fileID: 7754886184963352614, guid: 6acc48ca7219d3e44bb79df25140c353, type: 3}
       propertyPath: m_Name
       value: Alma
+      objectReference: {fileID: 0}
+    - target: {fileID: 7754886184963352614, guid: 6acc48ca7219d3e44bb79df25140c353, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7754886184963352614, guid: 6acc48ca7219d3e44bb79df25140c353, type: 3}
+      propertyPath: m_TagString
+      value: Ground
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
