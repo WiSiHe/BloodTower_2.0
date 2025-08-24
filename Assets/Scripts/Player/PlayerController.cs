@@ -188,6 +188,43 @@ public class PlayerController : MonoBehaviour
             transform.localScale = scale;
         }
     }
+   
+
+    public void ExternalBounce(float force, bool resetAirJumps)
+    {
+        // Ignore in isometric mode (no jumping there)
+        if (isIsometric) return;
+
+        // Zero vertical velocity for a crisp, consistent bounce
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+#else
+    rb.velocity = new Vector2(rb.velocity.x, 0f);
+#endif
+
+        rb.AddForce(Vector2.up * force, ForceMode2D.Impulse);
+
+        // Treat as a jump for animation & SFX
+        if (animator) animator.SetBool("isJumping", true);
+        if (jumpAudio) jumpAudio.Play();
+
+        // Refill air jumps so the player can keep chaining bounces
+        if (resetAirJumps)
+        {
+            // This matches how we reset in ground contact
+            // (requires extraAirJumps + doubleJumpEnabled pattern from earlier)
+            // If you don't have extraAirJumps, just omit this.
+            var field = GetType().GetField("extraAirJumps");
+            var djField = GetType().GetField("doubleJumpEnabled");
+            if (field != null && djField != null && (bool)djField.GetValue(this))
+            {
+                int extra = (int)field.GetValue(this);
+                // private int airJumpsLeft; -> set via reflection or expose a method if you prefer
+                var aj = GetType().GetField("airJumpsLeft", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (aj != null) aj.SetValue(this, Mathf.Max(0, extra));
+            }
+        }
+    }
 
     IsoDir GetIsoDirection(Vector2 v, bool fourWay)
     {
