@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class LevelExit : MonoBehaviour
 {
@@ -7,11 +8,13 @@ public class LevelExit : MonoBehaviour
     [Tooltip("Exact scene name (must be in Build Settings).")]
     [SerializeField] private string nextSceneName = "Tutorial";
 
-    [SerializeField] AudioSource exitAudio;
+    [Header("Audio (optional)")]
+    [SerializeField] private AudioSource exitAudio;
+    [SerializeField] private bool waitForAudio = true; // wait for clip length before fade/load
 
+    [Header("Trigger")]
     [Tooltip("Only the object with this tag can trigger the exit.")]
     [SerializeField] private string targetTag = "Player";
-
     [Tooltip("If true, disables this trigger after first use to prevent double-loads.")]
     [SerializeField] private bool oneShot = true;
 
@@ -29,12 +32,11 @@ public class LevelExit : MonoBehaviour
             var path = UnityEditor.AssetDatabase.GetAssetPath(sceneAsset);
             if (!string.IsNullOrEmpty(path) && path.EndsWith(".unity"))
             {
-                // Extract scene name from path (last segment without .unity)
                 string file = System.IO.Path.GetFileNameWithoutExtension(path);
                 if (!string.IsNullOrEmpty(file)) nextSceneName = file;
             }
         }
-         if (exitAudio == null)
+        if (exitAudio == null)
             exitAudio = GetComponentInChildren<AudioSource>();
     }
 #endif
@@ -43,7 +45,6 @@ public class LevelExit : MonoBehaviour
 
     private void Reset()
     {
-        // Make it a 2D trigger by default
         var box = GetComponent<BoxCollider2D>();
         if (box == null) box = gameObject.AddComponent<BoxCollider2D>();
         box.isTrigger = true;
@@ -56,51 +57,64 @@ public class LevelExit : MonoBehaviour
 
         _used = true;
         onTriggered?.Invoke();
-        LoadNext();
+        StartCoroutine(LoadNextRoutine());
     }
 
-    private void LoadNext()
+    private IEnumerator LoadNextRoutine()
     {
         if (string.IsNullOrWhiteSpace(nextSceneName))
         {
             Debug.LogError("[LevelExit] nextSceneName is empty. Set it in the Inspector.");
             _used = false; // allow retry if misconfigured
-            return;
+            yield break;
         }
 
-        // If you use a GameSession and want to reset anything, do it here before load:
-        // GameSession.Instance?.SetLastLevel(nextSceneName);
+        // Safety: unpause
+        Time.timeScale = 1f;
 
-        Time.timeScale = 1f; // safety
-
+        // Try to freeze player control/motion briefly for a clean handoff
         var player = GameObject.FindGameObjectWithTag(targetTag);
         if (player != null)
         {
-            var pc = player.GetComponent<PlayerController>();
-            if (pc) pc.enabled = false;
+            // If you have a controller script, disable it (optional)
+            var behaviour = player.GetComponent<MonoBehaviour>(); // replace with your specific controller if desired
+            if (behaviour) behaviour.enabled = false;
 
             var rb = player.GetComponent<Rigidbody2D>();
             if (rb != null)
             {
-        #if UNITY_6000_OR_NEWER
-            rb.linearVelocity = Vector2.zero;
-        #else
+#if UNITY_6000_OR_NEWER
                 rb.linearVelocity = Vector2.zero;
-        #endif
+#else
+                rb.linearVelocity = Vector2.zero;
+#endif
                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
             }
         }
 
-        // Try to use the SceneFader prefab if it's present; otherwise load directly.
-        var fader = FindObjectOfType<SceneFader>();
+        // Play exit SFX if assigned
+        float wait = 0f;
+        if (exitAudio != null && exitAudio.clip != null)
+        {
+            exitAudio.Play();
+            if (waitForAudio) wait = exitAudio.clip.length;
+        }
+
+        if (wait > 0f)
+            yield return new WaitForSeconds(wait);
+
+        // Use SceneFader if present; else load directly
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        var fader = Object.FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
+#else
+        var fader = Object.FindObjectOfType<SceneFader>(true);
+#endif
         if (fader != null)
         {
-            // Use your existing loadDelay as the fade duration as well.
-            fader.FadeAndLoad(nextSceneName);
+            fader.FadeToScene(nextSceneName);   // <-- public API
         }
         else
         {
-            // Fallback: no fader in scene
             SceneManager.LoadScene(nextSceneName);
         }
     }

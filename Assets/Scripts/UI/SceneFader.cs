@@ -1,54 +1,59 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using System.Collections;
 
+[RequireComponent(typeof(CanvasGroup))]
 public class SceneFader : MonoBehaviour
 {
-    [SerializeField] private Image fadeImage;
-    [SerializeField] private float defaultDuration = 1f;
+    [SerializeField] private float duration = 0.5f;
+    private CanvasGroup cg;
 
-    void Awake()
+    private void Awake()
     {
+        cg = GetComponent<CanvasGroup>();
+        HideAndUnblock();
         DontDestroyOnLoad(gameObject);
-        if (fadeImage != null)
-            fadeImage.color = new Color(0, 0, 0, 0); // start transparent
     }
 
-    public void FadeAndLoad(string sceneName, float duration = -1f)
+    // PUBLIC: call this from other scripts (e.g., LevelExit)
+    public void FadeToScene(string sceneName)
     {
-        if (duration <= 0f) duration = defaultDuration;
-        StartCoroutine(FadeRoutine(sceneName, duration));
+        StopAllCoroutines();
+        StartCoroutine(FadeAndLoad(sceneName));
     }
 
-    private IEnumerator FadeRoutine(string sceneName, float duration)
+    private IEnumerator FadeAndLoad(string sceneName)
     {
-        // Fade out
-        yield return Fade(0f, 1f, duration);
+        cg.blocksRaycasts = true;
+        cg.interactable = false;
 
-        // Load scene
-        var op = SceneManager.LoadSceneAsync(sceneName);
-        while (!op.isDone) yield return null;
-
-        // Small delay so scene settles
-        yield return null;
-
-        // Fade in
-        yield return Fade(1f, 0f, duration);
-    }
-
-    private IEnumerator Fade(float from, float to, float duration)
-    {
         float t = 0f;
-        var c = fadeImage.color;
         while (t < duration)
         {
             t += Time.unscaledDeltaTime;
-            c.a = Mathf.Lerp(from, to, t / duration);
-            fadeImage.color = c;
+            cg.alpha = Mathf.Clamp01(t / duration);
             yield return null;
         }
-        c.a = to;
-        fadeImage.color = c;
+
+        if (Time.timeScale == 0f) Time.timeScale = 1f;
+        yield return SceneManager.LoadSceneAsync(sceneName);
+
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            cg.alpha = 1f - Mathf.Clamp01(t / duration);
+            yield return null;
+        }
+
+        HideAndUnblock();
+    }
+
+    private void HideAndUnblock()
+    {
+        cg.alpha = 0f;
+        cg.blocksRaycasts = false;
+        cg.interactable = false;
+        gameObject.SetActive(true);
     }
 }
