@@ -32,6 +32,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Hallway.unity
     guid: 5179ecf72ac2f4a0096957db7d9b1767
+  - enabled: 1
+    path: Assets/Scenes/MiniGame_spaceInvaders.unity
+    guid: e1bbaedaf751d0f23a11d015da8f6653
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
