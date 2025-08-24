@@ -153,7 +153,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 358, y: -415}
+  m_AnchoredPosition: {x: 540, y: -237}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &155566424
@@ -549,7 +549,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -218, y: 233}
+  m_AnchoredPosition: {x: -638, y: 367}
   m_SizeDelta: {x: 620, y: 720}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1919867163
@@ -574,13 +574,13 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Snorres kongesagaer forteller om helted\xE5dene til de norske kongene.
     Men \xE9n konge ble med vilje utelatt, for alltid glemt av historien. Han regjerte
-    fra et stort t\xE5rn langt ute p\xE5 landsbygda.\nRyktene om barn som forsvant
+    fra et stort t\xE5rn langt ute p\xE5 landsbygda.\n\nRyktene om barn som forsvant
     fra nabolandsbyene ble hvisket p\xE5 hushj\xF8rnene: \u201Ckongen drikker ungt
     barneblod for \xE5 holde seg levende\u201D.\nEn dag forsvinner lilles\xF8steren
     din. Du setter fart mot det f\xF8rste stedet du tenker \xE5 lete."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d7f97e5aeea2240c7b0f3542a3d14261, type: 2}
+  m_sharedMaterial: {fileID: -3205679362241898260, guid: d7f97e5aeea2240c7b0f3542a3d14261, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -604,10 +604,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 37.4
+  m_fontSizeBase: 24
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -642,7 +642,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 436.16785, z: -532.2722, w: 0}
+  m_margin: {x: 0, y: 351.48282, z: -487.8183, w: -202.89105}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

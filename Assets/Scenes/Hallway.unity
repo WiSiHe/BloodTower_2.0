@@ -223,7 +223,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6840465867713548953, guid: b08bac371b4f8ce4b8851cf8cbc417e3, type: 3}
       propertyPath: orthographic size
-      value: 4.1
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8858149563912168177, guid: b08bac371b4f8ce4b8851cf8cbc417e3, type: 3}
       propertyPath: m_LocalPosition.x
@@ -278,6 +278,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2317983430537162857, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2317983430537162857, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2317983430537162857, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2317983430537162857, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3900779030246339182, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -364,6 +380,38 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6352552477463657202, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8182797514478338201, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8182797514478338201, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8182797514478338201, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8182797514478338201, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8806852545166754789, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8806852545166754789, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8806852545166754789, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8806852545166754789, guid: 90562d61d79d548ae8bb3a13f6f6a287, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -564,7 +612,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1438989350268781, guid: c9e8aa233c84e7047a572a019b7917e2, type: 3}
       propertyPath: Lens.OrthographicSize
-      value: 4.1
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 1827757193386161847, guid: c9e8aa233c84e7047a572a019b7917e2, type: 3}
       propertyPath: m_LocalPosition.x
