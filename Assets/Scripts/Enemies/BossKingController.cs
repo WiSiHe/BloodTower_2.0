@@ -15,6 +15,10 @@ public class BossKingController : MonoBehaviour
     [SerializeField] private float playerDisableSecs  = 0.25f;
     [SerializeField] private string playerTag         = "Player";
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource shoveKingAudio;
+    [SerializeField] private AudioSource shoveHeroAudio;
+
     [Header("Damping")]
     [Tooltip("Light velocity damping per FixedUpdate (set ~0.98..1). Too low = stalls.")]
     [SerializeField] private float velocityDamping = 0.98f;
