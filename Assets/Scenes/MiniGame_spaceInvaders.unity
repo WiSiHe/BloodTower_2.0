@@ -910,7 +910,7 @@ MonoBehaviour:
       m_Calls: []
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: Keyboard&Mouse
+  m_DefaultControlScheme: 
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
@@ -930,6 +930,8 @@ MonoBehaviour:
   invulnDuration: 1
   blinkTotal: 0.25
   blinkStep: 0.05
+  deathSceneName: IsometricHall
+  deathLoadDelay: 0
 --- !u!1 &1014596852
 GameObject:
   m_ObjectHideFlags: 0
