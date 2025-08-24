@@ -5,7 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - shoveKingAudio: {fileID: 5389905187545681379, guid: 358c1bfab3a7148a2bbb430db2b5d5df, type: 3}
-  - shoveHeroAudio: {instanceID: 0}
+  - shoveHeroAudio: {fileID: 5389905187545681379, guid: 970168a1ce7864215a50b5007a43ae3d, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
