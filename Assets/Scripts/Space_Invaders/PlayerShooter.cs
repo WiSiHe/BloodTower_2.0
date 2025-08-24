@@ -1,13 +1,36 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(PlayerInput))]
 public class PlayerShooter : MonoBehaviour
 {
+    [Header("Shoot")]
     public GameObject arrowPrefab;
     public Transform firePoint;
     public float fireCooldown = 5f;   // seconds between shots
 
-    float cooldown; // timer counts down to 0
+    float cooldown;                   // timer counts down to 0
+    PlayerInput playerInput;
+    InputAction attackAction;
+
+    void Awake()
+    {
+        playerInput = GetComponent<PlayerInput>();
+
+        // Find the "Attack" action in the assigned actions asset/map.
+        // If it's under a map called "Player", "Player/Attack" also works.
+        attackAction = playerInput.actions.FindAction("Attack", throwIfNotFound: true);
+    }
+
+    void OnEnable()
+    {
+        attackAction.performed += OnAttackPerformed;
+    }
+
+    void OnDisable()
+    {
+        attackAction.performed -= OnAttackPerformed;
+    }
 
     void Update()
     {
@@ -15,9 +38,9 @@ public class PlayerShooter : MonoBehaviour
             cooldown -= Time.deltaTime;
     }
 
-    // MUST be public, name must match action: Attack
-    public void OnAttack()
+    void OnAttackPerformed(InputAction.CallbackContext ctx)
     {
+        if (!ctx.performed) return;
         Shoot();
     }
 

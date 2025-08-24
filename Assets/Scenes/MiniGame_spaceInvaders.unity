@@ -511,15 +511,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7364795137129322710, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: canJump
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8701851861330570599, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Constraints
-      value: 6
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8701851861330570599, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_GravityScale
-      value: 20
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Name
@@ -897,7 +897,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
   m_Actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
-  m_NotificationBehavior: 0
+  m_NotificationBehavior: 3
   m_UIInputModule: {fileID: 0}
   m_DeviceLostEvent:
     m_PersistentCalls:
