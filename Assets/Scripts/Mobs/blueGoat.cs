@@ -6,6 +6,10 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody2D))]
 public class BlueGoat : MonoBehaviour
 {
+    [Header("Space")]
+    [Tooltip("If true: top-down isometric wandering (NE/NW/SE/SW). If false: 2D side-scroller left/right only.")]
+    public bool isIsometricMovement = false;
+
     [Header("Movement Settings")]
     public float moveSpeed = 2f;
     public float minActionTime = 1f;
@@ -26,7 +30,13 @@ public class BlueGoat : MonoBehaviour
 
     private Rigidbody2D rb;
     private float actionTimer;
-    private int moveDirection; // -1 left, 0 idle, 1 right
+
+    // 2D side-scroller direction: -1 left, 0 idle, 1 right
+    private int moveDirection = 0;
+
+    // Isometric top-down direction (NE/NW/SE/SW or idle)
+    private Vector2 isoDirection = Vector2.zero;
+
     private bool isFacingRight = true;
 
     private GameObject currentRider;
@@ -49,6 +59,9 @@ public class BlueGoat : MonoBehaviour
 
         ChooseNewAction();
         ResetBuckTimer();
+
+        // Tip: In isometric mode, set Rigidbody2D.gravityScale = 0 in the inspector to avoid gravity pulling on Y.
+        // In side-scroller mode, keep your normal gravity for jumping/bucking feel.
     }
 
     void Update()
@@ -58,13 +71,31 @@ public class BlueGoat : MonoBehaviour
 
         if (actionTimer <= 0f) ChooseNewAction();
 
-#if UNITY_6000_0_OR_NEWER
-        rb.linearVelocity = new Vector2(moveDirection * moveSpeed, rb.linearVelocity.y);
-#else
-        rb.velocity = new Vector2(moveDirection * moveSpeed, rb.velocity.y);
-#endif
+        // Compute target velocity based on selected space
+        Vector2 targetVelocity;
 
-        FlipSprite();
+        if (isIsometricMovement)
+        {
+            // Top-down: drive both X and Y (normalize to keep speed consistent on diagonals)
+            targetVelocity = isoDirection * moveSpeed;
+
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = targetVelocity;
+#else
+            rb.velocity = targetVelocity;
+#endif
+        }
+        else
+        {
+            // Side-scroller: only X movement, keep existing Y velocity (gravity/jumps/buck)
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = new Vector2(moveDirection * moveSpeed, rb.linearVelocity.y);
+#else
+            rb.velocity = new Vector2(moveDirection * moveSpeed, rb.velocity.y);
+#endif
+        }
+
+        FlipSprite(isIsometricMovement ? isoDirection.x : moveDirection);
 
         HandleMountInput();
 
@@ -80,23 +111,43 @@ public class BlueGoat : MonoBehaviour
 
     void ChooseNewAction()
     {
-        int choice = Random.Range(0, 3);
-        if (choice == 0) moveDirection = -1;
-        else if (choice == 1) moveDirection = 1;
-        else moveDirection = 0;
+        if (isIsometricMovement)
+        {
+            // 0..4 -> NE, NW, SE, SW, Idle
+            int choice = Random.Range(0, 5);
+            switch (choice)
+            {
+                case 0: isoDirection = new Vector2(1f, 1f).normalized; break;   // NE
+                case 1: isoDirection = new Vector2(-1f, 1f).normalized; break;  // NW
+                case 2: isoDirection = new Vector2(1f, -1f).normalized; break;  // SE
+                case 3: isoDirection = new Vector2(-1f, -1f).normalized; break; // SW
+                default: isoDirection = Vector2.zero; break;                     // Idle
+            }
+            moveDirection = Mathf.RoundToInt(Mathf.Sign(isoDirection.x));
+        }
+        else
+        {
+            // Side-scroller: -1, 0, 1
+            int choice = Random.Range(0, 3);
+            if (choice == 0) moveDirection = -1;
+            else if (choice == 1) moveDirection = 1;
+            else moveDirection = 0;
+
+            isoDirection = new Vector2(moveDirection, 0f);
+        }
 
         actionTimer = Random.Range(minActionTime, maxActionTime);
     }
 
-    void FlipSprite()
+    void FlipSprite(float xDir)
     {
-        if (moveDirection > 0 && !isFacingRight)
+        if (xDir > 0.01f && !isFacingRight)
         {
             isFacingRight = true;
             if (sr) sr.flipX = false;
             else { var s = transform.localScale; s.x = Mathf.Abs(s.x); transform.localScale = s; }
         }
-        else if (moveDirection < 0 && isFacingRight)
+        else if (xDir < -0.01f && isFacingRight)
         {
             isFacingRight = false;
             if (sr) sr.flipX = true;
@@ -126,7 +177,6 @@ public class BlueGoat : MonoBehaviour
         var kb = Keyboard.current;
         return kb != null && kb.eKey.wasPressedThisFrame;
 #else
-        // If only legacy input is enabled, map to E by default.
         return Input.GetKeyDown(KeyCode.E);
 #endif
     }
