@@ -476,14 +476,25 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8701851861330570599, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+      propertyPath: m_Mass
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
       propertyPath: m_Name
       value: King
       objectReference: {fileID: 0}
+    - target: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+      propertyPath: m_TagString
+      value: Boss
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 297033830}
   m_SourcePrefab: {fileID: 100100000, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
 --- !u!1001 &265088997
 PrefabInstance:
@@ -546,6 +557,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b08bac371b4f8ce4b8851cf8cbc417e3, type: 3}
+--- !u!1 &297033824 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8979746024464649324, guid: 737b32734221748debdc4b20e89e3cc5, type: 3}
+  m_PrefabInstance: {fileID: 213821569}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &297033830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 297033824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87477bc6cc54842829b47ca121d96d2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossKingController
+  targetSpeed: 6
+  accelGain: 40
+  maxSpeed: 10
+  dirBias: 0.15
+  shoveImpulse: 18
+  shoveCooldown: 0.35
+  playerDisableSecs: 0.25
+  playerTag: Player
+  shoveKingAudio: {fileID: 5389905187545681379, guid: 358c1bfab3a7148a2bbb430db2b5d5df, type: 3}
+  shoveHeroAudio: {fileID: 5389905187545681379, guid: 970168a1ce7864215a50b5007a43ae3d, type: 3}
+  velocityDamping: 0.98
+  stuckSpeedThreshold: 0.05
+  stuckTime: 0.35
+  nudgeImpulse: 2
 --- !u!1001 &360798745
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -970,7 +1012,7 @@ PrefabInstance:
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: boss
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 297033824}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: endingRouter
       value: 
@@ -1289,6 +1331,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1277075694868777903, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1889358630879728923, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_LocalPosition.x
       value: -26.03
@@ -1329,8 +1375,24 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2790571888408417512, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7364795137129322710, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8701851861330570599, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_Mass
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8701851861330570599, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_SleepingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8701851861330570599, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
+      propertyPath: m_CollisionDetection
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8979746024464649324, guid: 6437d81192e43784c856e9eb6c463174, type: 3}
