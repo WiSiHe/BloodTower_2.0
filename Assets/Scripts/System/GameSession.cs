@@ -9,7 +9,7 @@ public class GameSession : MonoBehaviour
     [Header("Scenes")]
     [SerializeField] private string tutorialSceneName = "Tutorial";
     [SerializeField] private string startMenuSceneName = "StartMenu";
-    [SerializeField] private string gameOverSceneName = "GameOver";
+    [SerializeField] private string gameOverSceneName  = "GameOver";
 
     [Header("Health / Sanity")]
     [SerializeField] private int   maxHearts = 3;
@@ -21,21 +21,25 @@ public class GameSession : MonoBehaviour
     [SerializeField] private bool  timerEnabled = false;
 
     [Header("Score (lower time = better)")]
-    [Tooltip("Higher = more points for finishing quickly. Score = round(TimeScoreBase / max(1, runTimeSeconds))")]
-    [SerializeField] private int timeScoreBase = 100000;
+    [SerializeField] private int timeScoreBase = 100000; // Score = round(base / max(1, seconds))
 
     [Header("Keys")]
-    [Tooltip("Keys collected this run (IDs). Use AddKey/HasKey/RemoveKey/ClearKeys APIs.")]
     [SerializeField] private List<string> keysSerialized = new List<string>();
-    private HashSet<string> keys = new HashSet<string>();
+    private HashSet<StringWrapper> keys = new HashSet<StringWrapper>();
 
-    // ---- Public read-only accessors ----
-    public int   MaxHearts => maxHearts;
-    public int   Hearts    => Mathf.Clamp(hearts, 0, maxHearts);
-    public float Sanity    => Mathf.Clamp(sanity, 0f, 100f);
-    public float RunTime   => Mathf.Max(0f, runTime);
-    public int   Score     => Mathf.RoundToInt(timeScoreBase / Mathf.Max(1f, runTime)); // lower time => higher score
-    public int   KeyCount  => keys.Count;
+    [Header("Children Stats")]
+    [SerializeField] private int childrenSaved = 0;
+    [SerializeField] private int childrenKilled = 0;
+
+    // --- Accessors ---
+    public int   MaxHearts      => maxHearts;
+    public int   Hearts         => Mathf.Clamp(hearts, 0, maxHearts);
+    public float Sanity         => Mathf.Clamp(sanity, 0f, 100f);
+    public float RunTime        => Mathf.Max(0f, runTime);
+    public int   Score          => Mathf.RoundToInt(timeScoreBase / Mathf.Max(1f, runTime));
+    public int   ChildrenSaved  => Mathf.Max(0, childrenSaved);
+    public int   ChildrenKilled => Mathf.Max(0, childrenKilled);
+    public int   KeyCount       => keys.Count;
 
     private void Awake()
     {
@@ -43,8 +47,9 @@ public class GameSession : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Rehydrate HashSet from serialized list (useful during playmode enter)
-        keys = new HashSet<string>(keysSerialized);
+        // Rehydrate keys
+        keys.Clear();
+        foreach (var s in keysSerialized) keys.Add(new StringWrapper(s));
     }
 
     private void Update()
@@ -52,13 +57,17 @@ public class GameSession : MonoBehaviour
         if (timerEnabled) runTime += Time.deltaTime;
     }
 
-    // ---------- Run lifecycle ----------
+    // -------- Run lifecycle --------
     public void ResetForNewRun()
     {
         hearts = maxHearts;
         sanity = 100f;
         runTime = 0f;
         timerEnabled = false;
+
+        childrenSaved = 0;
+        childrenKilled = 0;
+
         ClearKeys();
     }
 
@@ -70,49 +79,47 @@ public class GameSession : MonoBehaviour
 
     public void StopRunTimer() => timerEnabled = false;
 
-    // ---------- Health ----------
+    // -------- Health / Sanity --------
     public void Damage(int amount = 1)
     {
         hearts = Mathf.Clamp(hearts - Mathf.Abs(amount), 0, maxHearts);
         if (hearts <= 0) TriggerGameOver();
     }
     public void Heal(int amount = 1) => hearts = Mathf.Clamp(hearts + Mathf.Abs(amount), 0, maxHearts);
-
-    // ---------- Sanity ----------
     public void AddSanityDelta(float delta) => sanity = Mathf.Clamp(sanity + delta, 0f, 100f);
 
-    // ---------- Keys API ----------
+    // -------- Children stats --------
+    public void RecordChildSaved()  { childrenSaved++; }
+    public void RecordChildKilled() { childrenKilled++; }
+
+    // -------- Keys API --------
     public bool AddKey(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId)) return false;
-        bool added = keys.Add(keyId);
+        var added = keys.Add(new StringWrapper(keyId));
         SyncSerializedKeys();
         return added;
     }
-
-    public bool HasKey(string keyId) => !string.IsNullOrWhiteSpace(keyId) && keys.Contains(keyId);
-
+    public bool HasKey(string keyId)       => !string.IsNullOrWhiteSpace(keyId) && keys.Contains(new StringWrapper(keyId));
     public bool RemoveKey(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId)) return false;
-        bool removed = keys.Remove(keyId);
+        var removed = keys.Remove(new StringWrapper(keyId));
         SyncSerializedKeys();
         return removed;
     }
-
     public void ClearKeys()
     {
         keys.Clear();
         SyncSerializedKeys();
     }
-
     private void SyncSerializedKeys()
     {
         keysSerialized.Clear();
-        keysSerialized.AddRange(keys);
+        foreach (var w in keys) keysSerialized.Add(w.Value);
     }
 
-    // ---------- Scene helpers ----------
+    // -------- Scene helpers --------
     public void TriggerGameOver()
     {
         Time.timeScale = 1f;
@@ -132,5 +139,14 @@ public class GameSession : MonoBehaviour
         Time.timeScale = 1f;
         StopRunTimer();
         SceneManager.LoadScene(startMenuSceneName);
+    }
+
+    // Small wrapper so HashSet comparisons are case-sensitive and allocation-safe
+    private struct StringWrapper
+    {
+        public string Value;
+        public StringWrapper(string v) { Value = v; }
+        public override int GetHashCode() => Value != null ? Value.GetHashCode() : 0;
+        public override bool Equals(object obj) => obj is StringWrapper w && w.Value == Value;
     }
 }
