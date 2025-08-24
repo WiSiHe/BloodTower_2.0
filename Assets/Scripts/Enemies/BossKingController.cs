@@ -42,6 +42,10 @@ public class BossKingController : MonoBehaviour
 
         var go = GameObject.FindGameObjectWithTag(playerTag);
         player = go ? go.transform : null;
+        if (shoveKingAudio == null)
+            shoveKingAudio = GetComponentInChildren<AudioSource>();
+        if (shoveHeroAudio == null)
+            shoveHeroAudio = GetComponentInChildren<AudioSource>();
     }
 
     private void FixedUpdate()
@@ -110,10 +114,12 @@ public class BossKingController : MonoBehaviour
         if (knock != null)
         {
             knock.ApplyKnockback(away * shoveImpulse, playerDisableSecs);
+            shoveKingAudio.Play();
         }
         else
         {
             playerRB.AddForce(away * shoveImpulse, ForceMode2D.Impulse);
+            shoveHeroAudio.Play();
         }
 
         // Small recoil for king
