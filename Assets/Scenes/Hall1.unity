@@ -1442,7 +1442,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3505990617737799750, guid: c5800c5bb9c1e481099df121cf0cb204, type: 3}
       propertyPath: nextSceneName
-      value: TowerTop
+      value: Hallway
       objectReference: {fileID: 0}
     - target: {fileID: 6543218843133249529, guid: c5800c5bb9c1e481099df121cf0cb204, type: 3}
       propertyPath: m_Name
