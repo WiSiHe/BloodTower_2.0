@@ -7,7 +7,7 @@ public class MonsterMover : MonoBehaviour
     public float maxSpeed = 1.6f;
 
     [Header("Optional horizontal wobble")]
-    public bool wobble = true;
+    public bool wobble = false;
     public float wobbleAmplitude = 0.25f;
     public float wobbleFrequency = 1.2f;
 
@@ -34,9 +34,12 @@ public class MonsterMover : MonoBehaviour
     }
 
     // Clean up when off any camera
-   void OnBecameInvisible()
-{
-    Destroy(gameObject);
-}
+void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Ground"))
+        {
+            Destroy(gameObject);
+        }
+    }
 
 }

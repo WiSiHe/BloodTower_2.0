@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class Arrow : MonoBehaviour
 {
-    public float speed = 10f;
+    public float speed = 5f;
     public float lifeTime = 3f;
 
     private Rigidbody2D rb;
