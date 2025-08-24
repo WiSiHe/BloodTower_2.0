@@ -26,8 +26,8 @@ Transform:
   m_GameObject: {fileID: 1396347665783611120}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.0000092524315, w: 1}
-  m_LocalPosition: {x: -5.06, y: 2.23, z: 0}
-  m_LocalScale: {x: 4.9120884, y: 4.4266443, z: 1}
+  m_LocalPosition: {x: -0.6, y: 0.73, z: 0}
+  m_LocalScale: {x: 2.3774507, y: 2.187205, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4261700548164618089}
@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 3778273432214254680}
   - component: {fileID: 8370468862079892886}
   - component: {fileID: 4328716120067777089}
-  - component: {fileID: 3572919122910543715}
+  - component: {fileID: 1054035246410612632}
   m_Layer: 3
   m_Name: Alma
   m_TagString: Ground
@@ -120,8 +120,8 @@ Transform:
   m_GameObject: {fileID: 7754886184963352614}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.0000092524315, w: 1}
-  m_LocalPosition: {x: 22.52157, y: -5.56549, z: 0}
-  m_LocalScale: {x: 0.091, y: 0.1186, z: 1}
+  m_LocalPosition: {x: 22.3724, y: -5.5505, z: -1}
+  m_LocalScale: {x: 0.5834667, y: 0.6978933, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5887326529173877521}
@@ -174,7 +174,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 5140891770729859543, guid: 0c828a1aa03d69b45869819dcd9eb4d9, type: 3}
+  m_Sprite: {fileID: -2875558916996460105, guid: 9c88ab22064f4514da7594c46e539199, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -219,17 +219,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -2.1269236, y: -1.7485075}
+  m_Offset: {x: -0.23845685, y: -0.13170898}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 27.375, y: 19.5625}
+    oldSize: {x: 4.1666665, y: 3.4166667}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 23.121153, y: 16.065485}
+  m_Size: {x: 3.3616922, y: 3.263418}
   m_EdgeRadius: 0
 --- !u!50 &8370468862079892886
 Rigidbody2D:
@@ -257,7 +257,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &4328716120067777089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,6 +270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 653b5e1b0afbcb5429f8d01fabae7601, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueGoat
+  isIsometricMovement: 0
   moveSpeed: 3
   minActionTime: 1
   maxActionTime: 3
@@ -282,7 +283,7 @@ MonoBehaviour:
   buckLateralImpulse: 2
   forcedKnockoffChance: 0.3
   jointBreakForce: 150
---- !u!95 &3572919122910543715
+--- !u!95 &1054035246410612632
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
@@ -292,7 +293,7 @@ Animator:
   m_GameObject: {fileID: 7754886184963352614}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 56e6e11dcd1967749aa77bfdcd3da6d9, type: 2}
+  m_Controller: {fileID: 9100000, guid: ba7f84acb09b3bd488ab13f34107dad3, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
