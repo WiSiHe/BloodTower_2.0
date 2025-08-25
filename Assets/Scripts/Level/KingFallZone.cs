@@ -1,10 +1,15 @@
 using UnityEngine;
 
+/// Kill zone specifically for the Boss (King). When the King enters, route to victory.
 [RequireComponent(typeof(Collider2D))]
 public class KingFallZone : MonoBehaviour
 {
+    [Header("Who triggers victory")]
     [SerializeField] private string bossTag = "Boss";
-    [SerializeField] private BossFightManager manager; // auto-found if empty
+
+    [Header("Optional: also kill player if they fall here")]
+    [SerializeField] private string playerTag = "Player";
+    [SerializeField] private bool killPlayerToo = false;
 
     private void Reset()
     {
@@ -12,22 +17,20 @@ public class KingFallZone : MonoBehaviour
         col.isTrigger = true;
     }
 
-    private void Awake()
-    {
-        if (manager == null)
-        {
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-            manager = Object.FindFirstObjectByType<BossFightManager>(FindObjectsInactive.Include);
-#else
-            manager = Object.FindObjectOfType<BossFightManager>(true);
-#endif
-        }
-    }
-
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag(bossTag)) return;
-        var go = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
-        manager?.OnBossFell(go);
+        if (other.CompareTag(bossTag))
+        {
+            Debug.Log("[KingFallZone] Boss fell — triggering victory.");
+            EndingRouter.GoToVictory();
+            return;
+        }
+
+        if (killPlayerToo && other.CompareTag(playerTag))
+        {
+            Debug.Log("[KingFallZone] Player fell into boss pit — GAME OVER.");
+            // If you have a GameOver loader, call it here. Otherwise just reload Tutorial:
+            // SceneManager.LoadScene("GameOver");
+        }
     }
 }

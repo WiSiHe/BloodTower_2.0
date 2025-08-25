@@ -30,6 +30,27 @@ public class EndingRouter : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// Convenient static entrypoint for any script.
+    public static void GoToVictory()
+    {
+        // Prefer an existing instance
+        if (Instance != null) { Instance.LoadEndingScene(); return; }
+
+        // Try to find one in the scene(s)
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        var found = Object.FindFirstObjectByType<EndingRouter>(FindObjectsInactive.Include);
+#else
+        var found = Object.FindObjectOfType<EndingRouter>(true);
+#endif
+        if (found != null) { found.LoadEndingScene(); return; }
+
+        // Last resort: create a temporary router and run
+        var go = new GameObject("EndingRouter (Auto)");
+        var router = go.AddComponent<EndingRouter>();
+        router.LoadEndingScene();
+    }
+
+    /// Picks Good/Neutral/Evil and loads the scene (via optional SceneFader if present).
     public void LoadEndingScene()
     {
         var gs = GameSession.Instance;
@@ -53,20 +74,18 @@ public class EndingRouter : MonoBehaviour
         else SceneManager.LoadScene(target);
     }
 
-    // ---------- Helpers ----------
+    // ---------- helpers (reflection to be tolerant of your GameSession names) ----------
     private static int SafeGetInt(object obj, string[] names, int fallback)
     {
         if (obj == null) return fallback;
         var t = obj.GetType();
         foreach (var n in names)
         {
-            // property
             var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
             if (p != null && p.CanRead)
             {
                 try { return ConvertToInt(p.GetValue(obj)); } catch { }
             }
-            // field
             var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
             if (f != null)
             {
@@ -86,7 +105,7 @@ public class EndingRouter : MonoBehaviour
         return 0;
     }
 
-    // Editor shortcuts for testing
+    // Editor shortcuts (optional)
     [ContextMenu("Test → Good")]    private void TestGood()    => SceneManager.LoadScene(sceneGood);
     [ContextMenu("Test → Neutral")] private void TestNeutral() => SceneManager.LoadScene(sceneNeutral);
     [ContextMenu("Test → Evil")]    private void TestEvil()    => SceneManager.LoadScene(sceneEvil);

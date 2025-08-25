@@ -1,134 +1,181 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
+/// Hardens the duel when the player has 0 consumed children, while keeping parity/overpower pleasant.
+/// Plug this onto the TowerTop scene and drag refs (PlayerShove, Player RB, BossKingController,
+/// BossKnockback, Boss RB). It logs applied values on Start.
+[DefaultExecutionOrder(-100)]
 public class BossFightManager : MonoBehaviour
 {
-    [Header("Scenes")]
-    [SerializeField] private string victorySceneFallback = "Victory_Neutral";
-    [SerializeField] private string gameOverSceneName    = "GameOver";
-    [SerializeField] private EndingRouter endingRouter; // optional; auto-found
-
-    [Header("Auto‑Balance")]
-    [SerializeField] private int parityKills    = 3;
-    [SerializeField] private int overpowerKills = 5;
-
-    [Header("Player Shove (delta‑V)")]
-    [SerializeField] private float playerDeltaV_0Kills = 2.8f;
-    [SerializeField] private float playerDeltaV_Parity = 3.6f;
-    [SerializeField] private float playerDeltaV_Over   = 4.5f;
-    [SerializeField] private float playerRelBoost      = 0.4f;
-    [SerializeField] private float playerShoveCooldown = 0.25f;
-
-    [Header("King Settings")]
-    [SerializeField] private float kingShove_0Kills = 12f;
-    [SerializeField] private float kingShove_Parity = 16f;
-    [SerializeField] private float kingShove_Over   = 18f;
-    [SerializeField] private float kingTargetSpeed  = 6f;
-    [SerializeField] private float kingAccelGain    = 40f;
-    [SerializeField] private float kingMaxSpeed     = 10f;
-
-    [Header("Mass & Friction (optional)")]
-    [SerializeField] private float playerMass = 1.8f;
-    [SerializeField] private float kingMass   = 2.6f;
-    [SerializeField] private PhysicsMaterial2D lowFriction; // friction ~0.05–0.1
-
-    [Header("Refs (optional)")]
-    [SerializeField] private GameObject boss; // King root
+    [Header("Scene Refs")]
     [SerializeField] private PlayerShove playerShove;
-    [SerializeField] private BossKingController bossController;
+    [SerializeField] private Rigidbody2D playerRB;
+    [SerializeField] private BossKingController bossCtrl;
+    [SerializeField] private BossKnockback bossKnock;
+    [SerializeField] private Rigidbody2D bossRB;
 
-    private bool ended;
+    [Header("Kills curve anchors")]
+    [SerializeField] private int parityKills    = 2;
+    [SerializeField] private int overpowerKills = 4;
 
-    private void Awake()
-    {
-        if (Time.timeScale == 0f) Time.timeScale = 1f;
+    // ---------- Player shove curve (ΔV in m/s) ----------
+    [Header("Player Shove")]
+    [Tooltip("Lower = weaker shove at 0 kills (hard mode).")]
+    [SerializeField] private float playerDeltaV_0 = 3.0f;   // was ~3.6–4.8 → make it stingy
+    [SerializeField] private float playerDeltaV_P = 5.4f;   // parity feels fair
+    [SerializeField] private float playerDeltaV_O = 6.6f;   // overpowered feels strong
 
-        // Auto-find refs (no deprecation warnings)
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-        if (!endingRouter)   endingRouter   = Object.FindFirstObjectByType<EndingRouter>(FindObjectsInactive.Include);
-        if (!playerShove)    playerShove    = Object.FindFirstObjectByType<PlayerShove>(FindObjectsInactive.Include);
-        if (!bossController) bossController = Object.FindFirstObjectByType<BossKingController>(FindObjectsInactive.Include);
-#else
-        if (!endingRouter)   endingRouter   = Object.FindObjectOfType<EndingRouter>(true);
-        if (!playerShove)    playerShove    = Object.FindObjectOfType<PlayerShove>(true);
-        if (!bossController) bossController = Object.FindObjectOfType<BossKingController>(true);
+    [Tooltip("Extra boost if moving into the boss.")]
+    [SerializeField] private float playerRelBoost = 0.9f;   // keep modest at baseline
+
+    [Tooltip("Seconds between shove impulses.")]
+    [SerializeField] private float playerCD_0 = 0.22f;      // slower shoves when 0 kills
+    [SerializeField] private float playerCD_P = 0.14f;
+    [SerializeField] private float playerCD_O = 0.11f;
+
+    [Header("Assist & Minimum Impulse")]
+    [SerializeField] private float pushAssist_0 = 20f;      // almost no “magnet” help at 0
+    [SerializeField] private float pushAssist_P = 90f;
+    [SerializeField] private float pushAssist_O = 120f;
+
+    [SerializeField] private float minImpulse_0 = 34f;      // need a big hit to budge the king
+    [SerializeField] private float minImpulse_P = 26f;
+    [SerializeField] private float minImpulse_O = 28f;
+
+    // ---------- King power ----------
+    [Header("King Shove & Movement")]
+    [SerializeField] private float kingShove_0 = 14f;       // hits harder at 0 kills
+    [SerializeField] private float kingShove_P = 10f;
+    [SerializeField] private float kingShove_O = 8.5f;
+
+    [SerializeField] private float kingSpeed_0 = 7.0f;
+    [SerializeField] private float kingSpeed_P = 5.2f;
+    [SerializeField] private float kingSpeed_O = 4.6f;
+
+    [SerializeField] private float kingAccel_0 = 42f;       // chases aggressively at 0
+    [SerializeField] private float kingAccel_P = 28f;
+    [SerializeField] private float kingAccel_O = 22f;
+
+    [SerializeField] private float kingMax_0 = 9f;
+    [SerializeField] private float kingMax_P = 7.2f;
+    [SerializeField] private float kingMax_O = 6.2f;
+
+    // ---------- Boss knockback resistance ----------
+    [Header("Boss Knockback Resistance")]
+    [Tooltip("Min horizontal slide enforced while stunned (higher = resists weak taps).")]
+    [SerializeField] private float bossMinSpeed_0 = 11f;
+    [SerializeField] private float bossMinSpeed_P = 9f;
+    [SerializeField] private float bossMinSpeed_O = 8f;
+
+    [Tooltip("How long the king is ‘soft‑stunned’ after being hit.")]
+    [SerializeField] private float bossDisable_0 = 0.30f;   // shorter stun at 0 kills
+    [SerializeField] private float bossDisable_P = 0.42f;
+    [SerializeField] private float bossDisable_O = 0.48f;
+
+    // ---------- Mass ----------
+    [Header("Mass (momentum)")]
+    [SerializeField] private float playerMass_0 = 1.6f;
+    [SerializeField] private float playerMass_P = 1.6f;
+    [SerializeField] private float playerMass_O = 1.6f;
+
+    [SerializeField] private float bossMass_0 = 2.8f;       // heavier king at 0 kills
+    [SerializeField] private float bossMass_P = 2.3f;
+    [SerializeField] private float bossMass_O = 2.1f;
+
+    [Header("Debug")]
+    [SerializeField] private bool logAppliedValues = true;
+
+    private void Reset() => Autofind();
+    private void Awake() => Autofind();
+    private void Start() => Apply();
+
+#if UNITY_EDITOR
+    [ContextMenu("Reapply Now")] private void ReapplyNow() => Apply();
 #endif
-        if (!boss)
-        {
-            var b = GameObject.FindGameObjectWithTag("Boss");
-            if (b) boss = b;
-        }
 
-        ApplyAutoBalance();
+    private void Autofind()
+    {
+        if (!playerShove) playerShove = FindObjectOfType<PlayerShove>(true);
+        if (!playerRB)
+        {
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+            var pc = FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+#else
+            var pc = FindObjectOfType<PlayerController>(true);
+#endif
+            playerRB = playerShove ? playerShove.GetComponent<Rigidbody2D>() : pc ? pc.GetComponent<Rigidbody2D>() : null;
+        }
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        if (!bossCtrl)  bossCtrl  = FindFirstObjectByType<BossKingController>(FindObjectsInactive.Include);
+        if (!bossKnock) bossKnock = bossCtrl ? bossCtrl.GetComponent<BossKnockback>() : null;
+        if (!bossRB)    bossRB    = bossCtrl ? bossCtrl.GetComponent<Rigidbody2D>() : null;
+#else
+        if (!bossCtrl)  bossCtrl  = FindObjectOfType<BossKingController>(true);
+        if (!bossKnock) bossKnock = bossCtrl ? bossCtrl.GetComponent<BossKnockback>() : null;
+        if (!bossRB)    bossRB    = bossCtrl ? bossCtrl.GetComponent<Rigidbody2D>() : null;
+#endif
     }
 
-    private void ApplyAutoBalance()
+    public void Apply()
     {
+        Autofind();
+
         int kills = GameSession.Instance ? GameSession.Instance.ChildrenKilled : 0;
 
-        float pDeltaV = LerpByKills(kills, 0, parityKills, overpowerKills,
-                                    playerDeltaV_0Kills, playerDeltaV_Parity, playerDeltaV_Over);
+        float tP = Mathf.InverseLerp(0, Mathf.Max(1, parityKills), kills);
+        float tO = Mathf.InverseLerp(parityKills, Mathf.Max(parityKills + 1, overpowerKills), kills);
+        float Blend(float a0, float aP, float aO) => Mathf.Lerp(Mathf.Lerp(a0, aP, tP), aO, tO);
 
+        // compute targets
+        float pΔV   = Blend(playerDeltaV_0, playerDeltaV_P, playerDeltaV_O);
+        float pCD   = Blend(playerCD_0,     playerCD_P,     playerCD_O);
+        float pAsst = Blend(pushAssist_0,   pushAssist_P,   pushAssist_O);
+        float pMin  = Blend(minImpulse_0,   minImpulse_P,   minImpulse_O);
+
+        float kShv  = Blend(kingShove_0,    kingShove_P,    kingShove_O);
+        float kSpd  = Blend(kingSpeed_0,    kingSpeed_P,    kingSpeed_O);
+        float kAcc  = Blend(kingAccel_0,    kingAccel_P,    kingAccel_O);
+        float kMax  = Blend(kingMax_0,      kingMax_P,      kingMax_O);
+
+        float bMinS = Blend(bossMinSpeed_0, bossMinSpeed_P, bossMinSpeed_O);
+        float bDis  = Blend(bossDisable_0,  bossDisable_P,  bossDisable_O);
+
+        float mP    = Blend(playerMass_0,    playerMass_P,   playerMass_O);
+        float mK    = Blend(bossMass_0,      bossMass_P,     bossMass_O);
+
+        // apply
+        if (playerRB) playerRB.mass = mP;
         if (playerShove)
         {
-            float perChild = (playerDeltaV_Over - playerDeltaV_0Kills) / Mathf.Max(1f, overpowerKills);
-            playerShove.SetDesign(pDeltaV, perChild, playerRelBoost, playerShoveCooldown);
+            playerShove.SetDesign(pΔV, 0f, playerRelBoost, pCD);
 
-            var rb = playerShove.GetComponent<Rigidbody2D>();
-            if (rb) { rb.mass = playerMass; rb.freezeRotation = true; rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; rb.sleepMode = RigidbodySleepMode2D.NeverSleep; }
-            var col = playerShove.GetComponent<Collider2D>();
-            if (col && lowFriction) col.sharedMaterial = lowFriction;
+            // set private/public fields for assist & minImpulse if they exist
+            var t = typeof(PlayerShove);
+            var fAssist = t.GetField("pushAssistForce", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fMinImp = t.GetField("minImpulse",      System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (fAssist != null) fAssist.SetValue(playerShove, pAsst);
+            if (fMinImp != null) fMinImp.SetValue(playerShove, pMin);
         }
 
-        float kShove = LerpByKills(kills, 0, parityKills, overpowerKills,
-                                   kingShove_0Kills, kingShove_Parity, kingShove_Over);
+        if (bossRB) bossRB.mass = mK;
 
-        if (bossController)
+        if (bossCtrl) bossCtrl.SetDesign(
+            shoveImpulse: kShv,
+            shoveCooldown: 0.35f,   // keep your current unless you expose it
+            targetSpeed: kSpd,
+            accelGain:  kAcc,
+            maxSpeed:   kMax
+        );
+
+        if (bossKnock)
         {
-            bossController.SetDesign(kShove, 0.35f, kingTargetSpeed, kingAccelGain, kingMaxSpeed);
-
-            var rb = bossController.GetComponent<Rigidbody2D>();
-            if (rb) { rb.mass = kingMass; rb.freezeRotation = true; rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; rb.sleepMode = RigidbodySleepMode2D.NeverSleep; }
-            var col = bossController.GetComponent<Collider2D>();
-            if (col && lowFriction) col.sharedMaterial = lowFriction;
+            var t = typeof(BossKnockback);
+            var fMin = t.GetField("minHorizontalSpeed",  System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fDis = t.GetField("defaultDisableSeconds", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (fMin != null) fMin.SetValue(bossKnock, bMinS);
+            if (fDis != null) fDis.SetValue(bossKnock, bDis);
         }
 
-        Debug.Log($"[BossFightManager] Kills={kills} -> PlayerΔV={pDeltaV:0.00} m/s, KingShove={kShove:0.0}");
-    }
-
-    private static float LerpByKills(int kills, int k0, int k1, int k2, float v0, float v1, float v2)
-    {
-        if (kills <= k0) return v0;
-        if (kills >= k2) return v2;
-        if (kills <= k1) return Mathf.Lerp(v0, v1, (kills - k0) / Mathf.Max(1f, (float)(k1 - k0)));
-        return Mathf.Lerp(v1, v2, (kills - k1) / Mathf.Max(1f, (float)(k2 - k1)));
-    }
-
-    // ---- Called by fall zones ----
-    public void OnBossFell(GameObject bossGO)
-    {
-        if (ended) return; ended = true;
-        if (bossGO) Destroy(bossGO);
-
-        if (endingRouter != null) endingRouter.LoadEndingScene();
-        else LoadScene(victorySceneFallback);
-    }
-
-    public void OnPlayerDied()
-    {
-        if (ended) return; ended = true;
-        LoadScene(gameOverSceneName);
-    }
-
-    private void LoadScene(string scene)
-    {
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-        var fader = Object.FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
-#else
-        var fader = Object.FindObjectOfType<SceneFader>(true);
-#endif
-        Time.timeScale = 1f;
-        if (fader != null) fader.FadeToScene(scene);
-        else SceneManager.LoadScene(scene);
+        if (logAppliedValues)
+            Debug.Log($"[BossFightManager] Kills={kills} → PΔV={pΔV:0.00}, PCD={pCD:0.00}, Assist={pAsst}, MinImp={pMin} | KShove={kShv}, KSpd={kSpd}, KAcc={kAcc}, KMax={kMax} | BossMinSlide={bMinS}, Stun={bDis}, mP={mP}, mK={mK}");
     }
 }

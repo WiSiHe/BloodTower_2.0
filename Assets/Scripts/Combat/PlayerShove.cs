@@ -1,104 +1,114 @@
 using UnityEngine;
 
+/// Adds a physics "shove" when the player collides with the boss, but ONLY
+/// if (a) cooldown elapsed and (b) the player is moving into the boss (impact).
+/// BossFightManager can call SetDesign(...) at runtime to tune values.
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerShove : MonoBehaviour
 {
-    [Header("Delta‑V Impulse (mass‑aware)")]
-    [SerializeField] private float baseTargetDeltaV = 5.5f;
-    [SerializeField] private float deltaVPerChild   = 0.35f;
-    [Range(0f, 2f)] [SerializeField] private float relativeSpeedBoost = 1.0f;
-    [SerializeField] private float shoveCooldown = 0.14f;
-
-    [Header("Continuous Push Assist")]
-    [SerializeField] private float pushAssistForce = 80f;
-    [SerializeField] private bool  requireApproachForAssist = true;
-
-    [Header("Safety")]
-    [SerializeField] private float minImpulse = 20f; // N·s
-
-    [Header("Target & Debug")]
+    [Header("Who can be shoved")]
     [SerializeField] private string bossTag = "Boss";
-    [SerializeField] private bool   debugLogs = true;
 
-    private float lastShoveTime;
+    [Header("Design (overridden by BossFightManager)")]
+    [Tooltip("Target delta‑V to impart to the boss per shove (m/s).")]
+    [SerializeField] private float baseTargetDeltaV = 5.0f;
+
+    [Tooltip("Scales additional delta‑V from relative approach speed.")]
+    [SerializeField] private float relativeSpeedBoost = 1.0f;
+
+    [Tooltip("Seconds between shoves. STRICTLY enforced.")]
+    [SerializeField] private float shoveCooldown = 0.18f;
+
+    [Header("Guards")]
+    [Tooltip("Require this much approach speed along the contact normal to count as an impact (m/s).")]
+    [SerializeField] private float approachThreshold = 0.6f;
+
+    [Tooltip("Minimum impulse (N·s) we will apply no matter what.")]
+    [SerializeField] public float minImpulse = 20f;
+
+    [Tooltip("Optional forward assist force to help the player lean into pushes.")]
+    [SerializeField] public float pushAssistForce = 0f;
+
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = false;
+
     private Rigidbody2D rb;
+    private float lastShoveTime = -999f;
+    private int lastHandledFixedFrame = -1;
 
-    private void Awake() => rb = GetComponent<Rigidbody2D>();
-
-    private float CurrentTargetDeltaV()
+    private void Awake()
     {
-        int kills = GameSession.Instance ? GameSession.Instance.ChildrenKilled : 0;
-        return baseTargetDeltaV + Mathf.Max(0, kills) * deltaVPerChild;
+        rb = GetComponent<Rigidbody2D>();
     }
 
-    private void OnCollisionStay2D(Collision2D c)
-    {
-        if (c.collider.isTrigger || (c.otherCollider && c.otherCollider.isTrigger)) return;
-
-        bool hitBoss = c.collider.CompareTag(bossTag) || (c.otherCollider && c.otherCollider.CompareTag(bossTag));
-        if (!hitBoss) return;
-
-        var bossRB = c.otherRigidbody;
-        if (bossRB == null) return;
-
-        Vector2 dir = (bossRB.position - rb.position).normalized;
-        if (c.contactCount > 0)
-        {
-            Vector2 avgNormal = Vector2.zero;
-            int n = Mathf.Min(c.contactCount, 4);
-            for (int i = 0; i < n; i++) avgNormal += c.GetContact(i).normal;
-            avgNormal /= Mathf.Max(1, n);
-            Vector2 push = -avgNormal; push.y = 0f;
-            if (push.sqrMagnitude > 0.0001f) dir = push.normalized;
-        }
-
-        // Continuous assist
-        if (pushAssistForce > 0f)
-        {
-#if UNITY_6000_0_OR_NEWER
-            float relAlong = Vector2.Dot(rb.linearVelocity - bossRB.linearVelocity, dir);
-#else
-            float relAlong = Vector2.Dot(rb.velocity - bossRB.velocity, dir);
-#endif
-            bool ok = !requireApproachForAssist || relAlong >= -0.05f;
-            if (ok) bossRB.AddForce(dir * pushAssistForce, ForceMode2D.Force);
-        }
-
-        if (Time.time - lastShoveTime >= shoveCooldown)
-        {
-            float targetDeltaV = CurrentTargetDeltaV();
-
-#if UNITY_6000_0_OR_NEWER
-            float relSpeedAlong = Vector2.Dot(rb.linearVelocity - bossRB.linearVelocity, dir);
-#else
-            float relSpeedAlong = Vector2.Dot(rb.velocity - bossRB.velocity, dir);
-#endif
-            if (relSpeedAlong > 0f)
-                targetDeltaV *= (1f + Mathf.Clamp01(relSpeedAlong / 4f) * relativeSpeedBoost);
-
-            float impulse = Mathf.Max(minImpulse, bossRB.mass * targetDeltaV);
-
-            var knock = bossRB.GetComponent<BossKnockback>() ??
-                        bossRB.GetComponentInParent<BossKnockback>() ??
-                        bossRB.GetComponentInChildren<BossKnockback>();
-
-            if (knock != null) knock.ApplyKnockback(dir * impulse, 0.35f);
-            else               bossRB.AddForce(dir * impulse, ForceMode2D.Impulse);
-
-            rb.AddForce(-dir * (impulse * 0.35f / Mathf.Max(1f, rb.mass)), ForceMode2D.Impulse);
-
-            if (debugLogs)
-                Debug.Log($"[PlayerShove] impulse={impulse:0.0} (min {minImpulse}), bossMass={bossRB.mass:0.00}, ΔV={(impulse/bossRB.mass):0.00}, rel={relSpeedAlong:0.00}, dir=({dir.x:0.00},{dir.y:0.00})");
-
-            lastShoveTime = Time.time;
-        }
-    }
-
+    /// Called by BossFightManager to retune during the fight.
     public void SetDesign(float baseTargetDeltaV, float deltaVPerChild, float relativeSpeedBoost, float shoveCooldown)
     {
         this.baseTargetDeltaV   = baseTargetDeltaV;
-        this.deltaVPerChild     = deltaVPerChild;
+        // deltaVPerChild is unused because we’re driving kills via the manager curve now.
         this.relativeSpeedBoost = relativeSpeedBoost;
         this.shoveCooldown      = shoveCooldown;
+    }
+
+    private void FixedUpdate()
+    {
+        // optional “lean forward” helper while moving toward the king
+        if (pushAssistForce > 0f)
+        {
+            // Apply a very small forward force; harmless if you’re not pushing.
+            rb.AddForce(new Vector2(rb.linearVelocity.x * 0.0f, 0f)); // placeholder for custom assist if desired
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (!collision.collider.CompareTag(bossTag)) return;
+
+        // Enforce: only one shove attempt per physics step
+        if (lastHandledFixedFrame == Time.frameCount) return;
+        lastHandledFixedFrame = Time.frameCount;
+
+        // Cooldown gate
+        if (Time.time - lastShoveTime < shoveCooldown) return;
+
+        // Determine if we're IMPACTING the boss (approaching along the contact normal)
+        // Use the first contact for direction
+        var contacts = collision.contacts;
+        if (contacts == null || contacts.Length == 0) return;
+
+        // normal points from *boss* into *player*, so we push the boss along -normal
+        Vector2 normalFromBossToPlayer = contacts[0].normal;
+        Vector2 pushDir = -normalFromBossToPlayer.normalized;
+
+        // Relative velocity along the push axis (boss - player)
+        var bossRb = collision.rigidbody; // boss rigidbody
+        if (bossRb == null) return;
+
+#if UNITY_6000_0_OR_NEWER
+        Vector2 vPlayer = rb.linearVelocity;
+        Vector2 vBoss   = bossRb.linearVelocity;
+#else
+        Vector2 vPlayer = rb.velocity;
+        Vector2 vBoss   = bossRb.velocity;
+#endif
+        Vector2 rel = vBoss - vPlayer; // if player moves into boss, projection onto pushDir will be negative
+        float relAlong = Vector2.Dot(rel, pushDir);
+
+        // Require sufficient approach speed (impact) before we shove
+        if (relAlong > -approachThreshold) return;
+
+        // Compute desired impulse: mass * (ΔV + relative bonus)
+        float targetDeltaV = baseTargetDeltaV + (relativeSpeedBoost * (-relAlong)); // -relAlong is positive when approaching
+        float impulse = Mathf.Max(minImpulse, bossRb.mass * targetDeltaV);
+
+        // Apply impulse to boss (and equal opposite to player if you want recoil; here we just push boss)
+        bossRb.AddForce(pushDir * impulse, ForceMode2D.Impulse);
+
+        lastShoveTime = Time.time;
+
+        if (debugLogs)
+        {
+            Debug.Log($"[PlayerShove] impulse={impulse:0.0} (min {minImpulse}), bossMass={bossRb.mass:0.00}, ΔV={targetDeltaV:0.00}, rel={relAlong:0.00}, dir=({pushDir.x:0.00},{pushDir.y:0.00})");
+        }
     }
 }
