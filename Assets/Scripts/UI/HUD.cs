@@ -15,6 +15,10 @@ public class HUD : MonoBehaviour
     [Header("Time")]
     [SerializeField] private TMP_Text timeText;   // MM:SS
 
+    [Header("Children Counters")]
+    [SerializeField] private TMP_Text savedText;
+    [SerializeField] private TMP_Text consumedText;
+
     private void Start()
     {
         if (sanitySlider != null)
@@ -55,5 +59,9 @@ public class HUD : MonoBehaviour
             int seconds = Mathf.FloorToInt(t % 60f);
             timeText.text = $"{minutes:00}:{seconds:00}";
         }
+
+        // Children counters
+        if (savedText != null) savedText.text = $"Saved: {gs.ChildrenSaved}";
+        if (consumedText != null) consumedText.text = $"Consumed: {gs.ChildrenKilled}";
     }
 }
