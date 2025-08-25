@@ -680,13 +680,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossCounterPush
   playerTag: Player
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   approachThreshold: 0.9
   braceDelay: 0.3
-  braceDuration: 0.45
-  braceMassMultiplier: 2.2
-  highFrictionWhileBraced: {fileID: 0}
-  counterImpulse: 14
-  counterCooldown: 1.05
+  parryThreshold: 2.7
+  braceDuration: 0.55
+  braceMassMultiplier: 2.5
+  highFrictionWhileBraced: {fileID: 6200000, guid: a6c58f28167c746bfaa3758d9bf52f96, type: 2}
+  counterImpulse: 20
+  counterCooldown: 0.9
   windupSeconds: 0.1
   camShakeAmp: 2
   camShakeFreq: 12
@@ -694,7 +698,7 @@ MonoBehaviour:
   sfx: {fileID: 0}
   windupSfx: {fileID: 0}
   bashSfx: {fileID: 0}
-  debugLogs: 0
+  debugLogs: 1
 --- !u!1001 &360798745
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1143,6 +1147,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 297033836}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: bossMass_0
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: playerMass
       value: 1.8
       objectReference: {fileID: 0}
@@ -1167,6 +1175,14 @@ PrefabInstance:
       value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: minImpulse_0
+      value: 38
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: pushAssist_0
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: kingAccelGain
       value: 40
       objectReference: {fileID: 0}
@@ -1175,12 +1191,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 297033830}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: bossMinSpeed_0
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: kingShove_Over
       value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: overpowerKills
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
+      propertyPath: playerDeltaV_0
+      value: 2.4
       objectReference: {fileID: 0}
     - target: {fileID: 2532960864571238089, guid: 0d984cf548bcb475eba3a98628c2963a, type: 3}
       propertyPath: playerRelBoost
@@ -1540,7 +1564,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerKnockback
   knockbackForce: 12
-  stunDuration: 0.25
+  stunDuration: 0.45
   shakeAmplitude: 1.4
   shakeFrequency: 7
   shakeDuration: 0.15
