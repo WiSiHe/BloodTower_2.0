@@ -1,112 +1,74 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Reflection;
 
-/// Chooses which Victory scene to load based on GameSession stats.
-/// Works even if your GameSession uses different member names (via reflection).
-[DefaultExecutionOrder(-500)]
+/// Drop this on a single GameObject in your scene.
+/// Call EndingRouter.GoToVictory(); or GoToGameOver();
 public class EndingRouter : MonoBehaviour
 {
     public static EndingRouter Instance { get; private set; }
 
-    [Header("Victory Scenes (Build Settings)")]
-    [SerializeField] private string sceneGood    = "Victory_Good";
-    [SerializeField] private string sceneNeutral = "Victory_Neutral";
-    [SerializeField] private string sceneEvil    = "Victory_Evil";
+    [Header("Scene Names")]
+    [SerializeField] private string goodScene     = "Victory_Good";
+    [SerializeField] private string neutralScene  = "Victory_Neutral";
+    [SerializeField] private string evilScene     = "Victory_Evil";
+    [SerializeField] private string gameOverScene = "GameOver";
 
-    [Header("Good ending rules")]
-    [SerializeField] private int mercyMinSaved  = 2;
-    [SerializeField] private int mercyMaxKilled = 0;
-    [SerializeField] private int mercyMinSanity = 50;
+    [Header("Decision thresholds (tweak to taste)")]
+    [Tooltip("If (Saved - Consumed) >= this and sanity >= minGoodSanity => GOOD.")]
+    [SerializeField] private int   minGoodDelta  = 2;
+    [SerializeField] private float minGoodSanity = 60f;
 
-    [Header("Evil ending rules")]
-    [SerializeField] private int corruptMinKilled = 2;
-    [SerializeField] private int corruptMaxSanity = 30;
+    [Tooltip("If Consumed >= this OR sanity <= maxEvilSanity => EVIL.")]
+    [SerializeField] private int   minEvilConsumed = 2;
+    [SerializeField] private float maxEvilSanity   = 30f;
 
-    private void Awake()
+    // Optional fade – leave null to use direct SceneManager
+    [SerializeField] private SimpleSceneFader fader;
+    [SerializeField] private float fadeOutSeconds = 0.45f;
+
+    void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        if (!fader) fader = FindFirstObjectByType<SimpleSceneFader>(FindObjectsInactive.Include);
     }
 
-    /// Convenient static entrypoint for any script.
     public static void GoToVictory()
     {
-        // Prefer an existing instance
-        if (Instance != null) { Instance.LoadEndingScene(); return; }
-
-        // Try to find one in the scene(s)
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-        var found = Object.FindFirstObjectByType<EndingRouter>(FindObjectsInactive.Include);
-#else
-        var found = Object.FindObjectOfType<EndingRouter>(true);
-#endif
-        if (found != null) { found.LoadEndingScene(); return; }
-
-        // Last resort: create a temporary router and run
-        var go = new GameObject("EndingRouter (Auto)");
-        var router = go.AddComponent<EndingRouter>();
-        router.LoadEndingScene();
-    }
-
-    /// Picks Good/Neutral/Evil and loads the scene (via optional SceneFader if present).
-    public void LoadEndingScene()
-    {
-        var gs = GameSession.Instance;
-
-        int saved  = SafeGetInt(gs, new[] { "ChildrenSaved", "SavedChildren", "KidsSaved" }, 0);
-        int killed = SafeGetInt(gs, new[] { "ChildrenKilled", "KidsKilled", "KilledChildren" }, 0);
-        int sanity = SafeGetInt(gs, new[] { "CurrentSanity", "Sanity", "SanityValue", "SanityPercent" }, 50);
-
-        bool isGood = (saved >= mercyMinSaved) && (killed <= mercyMaxKilled) && (sanity >= mercyMinSanity);
-        bool isEvil = (killed >= corruptMinKilled) && (sanity <= corruptMaxSanity) && (killed > saved);
-
-        string target = isGood ? sceneGood : (isEvil ? sceneEvil : sceneNeutral);
-
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-        var fader = Object.FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
-#else
-        var fader = Object.FindObjectOfType<SceneFader>(true);
-#endif
-        Time.timeScale = 1f;
-        if (fader != null) fader.FadeToScene(target);
-        else SceneManager.LoadScene(target);
-    }
-
-    // ---------- helpers (reflection to be tolerant of your GameSession names) ----------
-    private static int SafeGetInt(object obj, string[] names, int fallback)
-    {
-        if (obj == null) return fallback;
-        var t = obj.GetType();
-        foreach (var n in names)
+        if (!Instance) { Debug.LogWarning("EndingRouter missing. Loading neutral directly."); SceneManager.LoadScene("Victory_Neutral"); return; }
+        
+        // Record victory in GameSession for scoring
+        if (GameSession.Instance != null)
         {
-            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
-            if (p != null && p.CanRead)
-            {
-                try { return ConvertToInt(p.GetValue(obj)); } catch { }
-            }
-            var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
-            if (f != null)
-            {
-                try { return ConvertToInt(f.GetValue(obj)); } catch { }
-            }
+            GameSession.Instance.RecordVictory();
         }
-        return fallback;
+        
+        Instance.Load(Instance.ChooseVictoryScene());
     }
 
-    private static int ConvertToInt(object v)
+    public static void GoToGameOver()
     {
-        if (v == null) return 0;
-        if (v is int i) return i;
-        if (v is float f) return Mathf.RoundToInt(f);
-        if (v is double d) return Mathf.RoundToInt((float)d);
-        if (int.TryParse(v.ToString(), out var parsed)) return parsed;
-        return 0;
+        if (!Instance) { SceneManager.LoadScene("GameOver"); return; }
+        Instance.Load(Instance.gameOverScene);
     }
 
-    // Editor shortcuts (optional)
-    [ContextMenu("Test → Good")]    private void TestGood()    => SceneManager.LoadScene(sceneGood);
-    [ContextMenu("Test → Neutral")] private void TestNeutral() => SceneManager.LoadScene(sceneNeutral);
-    [ContextMenu("Test → Evil")]    private void TestEvil()    => SceneManager.LoadScene(sceneEvil);
+    string ChooseVictoryScene()
+    {
+        int   saved   = GameSession.Instance ? GameSession.Instance.ChildrenSaved  : 0;
+        int   eaten   = GameSession.Instance ? GameSession.Instance.ChildrenKilled : 0;
+        float sanity  = GameSession.Instance ? GameSession.Instance.Sanity         : 50f;
+        int   delta   = saved - eaten;
+
+        if (delta >= minGoodDelta && sanity >= minGoodSanity) return goodScene;
+        if (eaten >= minEvilConsumed || sanity <= maxEvilSanity) return evilScene;
+        return neutralScene;
+    }
+
+    void Load(string sceneName)
+    {
+        if (fader != null) fader.FadeAndLoad(sceneName, fadeOutSeconds);
+        else SceneManager.LoadScene(sceneName);
+    }
 }

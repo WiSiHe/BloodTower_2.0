@@ -1,59 +1,92 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
 
-[RequireComponent(typeof(CanvasGroup))]
+/// Simple, backward-compatible screen fader + scene loader.
+/// Works with both FadeToScene(...) and FadeAndLoad(...).
 public class SceneFader : MonoBehaviour
 {
-    [SerializeField] private float duration = 0.5f;
-    private CanvasGroup cg;
+    [Header("Fade UI")]
+    [Tooltip("Full-screen CanvasGroup used to fade. Alpha will be animated 0→1.")]
+    [SerializeField] private CanvasGroup fadeCanvas;
 
-    private void Awake()
+    [Tooltip("Seconds for the fade to full black before loading the scene.")]
+    [SerializeField] private float fadeDuration = 0.5f;
+
+    [Tooltip("Use unscaled time (ignores Time.timeScale) for the fade.")]
+    [SerializeField] private bool useUnscaledTime = true;
+
+    [Tooltip("Block input while fading.")]
+    [SerializeField] private bool blockRaycastsWhileFading = true;
+
+    private Coroutine _running;
+
+    // ---------- Backward-compat helpers ----------
+    // Old code calls: sceneFader.FadeToScene("MyScene");
+    public void FadeToScene(string sceneName) => FadeAndLoad(sceneName, 0f);
+
+    // Old code calls: sceneFader.FadeToScene("MyScene", 0.35f);
+    public void FadeToScene(string sceneName, float delaySeconds) => FadeAndLoad(sceneName, delaySeconds);
+
+    // Newer API (also used by some scripts now)
+    public void FadeAndLoad(string sceneName) => FadeAndLoad(sceneName, 0f);
+
+    public void FadeAndLoad(string sceneName, float delaySeconds)
     {
-        cg = GetComponent<CanvasGroup>();
-        HideAndUnblock();
-        DontDestroyOnLoad(gameObject);
+        if (_running != null) StopCoroutine(_running);
+        _running = StartCoroutine(FadeAndSwitchScene(sceneName, delaySeconds));
     }
 
-    // PUBLIC: call this from other scripts (e.g., LevelExit)
-    public void FadeToScene(string sceneName)
+    // Optional static convenience (if some code wants to call without a reference)
+    public static void FadeGlobal(string sceneName, float delaySeconds = 0f)
     {
-        StopAllCoroutines();
-        StartCoroutine(FadeAndLoad(sceneName));
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        var fader = FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
+#else
+        var fader = FindObjectOfType<SceneFader>(true);
+#endif
+        if (fader != null) fader.FadeAndLoad(sceneName, delaySeconds);
+        else SceneManager.LoadScene(sceneName); // fail-safe
     }
 
-    private IEnumerator FadeAndLoad(string sceneName)
+    private IEnumerator FadeAndSwitchScene(string sceneName, float delaySeconds)
     {
-        cg.blocksRaycasts = true;
-        cg.interactable = false;
+        if (fadeCanvas == null)
+        {
+            Debug.LogWarning("[SceneFader] No CanvasGroup assigned; loading scene without fade.");
+            yield return Delay(delaySeconds);
+            SceneManager.LoadScene(sceneName);
+            yield break;
+        }
 
+        // Prep fade layer
+        fadeCanvas.gameObject.SetActive(true);
+        if (blockRaycastsWhileFading) fadeCanvas.blocksRaycasts = true;
+
+        // Optional delay before fade begins
+        yield return Delay(delaySeconds);
+
+        // Animate alpha -> 1
         float t = 0f;
-        while (t < duration)
+        float start = fadeCanvas.alpha;
+        while (t < fadeDuration)
         {
-            t += Time.unscaledDeltaTime;
-            cg.alpha = Mathf.Clamp01(t / duration);
+            t += Dt();
+            fadeCanvas.alpha = Mathf.Lerp(start, 1f, Mathf.Clamp01(t / fadeDuration));
             yield return null;
         }
+        fadeCanvas.alpha = 1f;
 
-        if (Time.timeScale == 0f) Time.timeScale = 1f;
-        yield return SceneManager.LoadSceneAsync(sceneName);
-
-        t = 0f;
-        while (t < duration)
-        {
-            t += Time.unscaledDeltaTime;
-            cg.alpha = 1f - Mathf.Clamp01(t / duration);
-            yield return null;
-        }
-
-        HideAndUnblock();
+        // Load the new scene
+        SceneManager.LoadScene(sceneName);
     }
 
-    private void HideAndUnblock()
+    private float Dt() => useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+
+    private IEnumerator Delay(float s)
     {
-        cg.alpha = 0f;
-        cg.blocksRaycasts = false;
-        cg.interactable = false;
-        gameObject.SetActive(true);
+        if (s <= 0f) yield break;
+        float t = 0f;
+        while (t < s) { t += Dt(); yield return null; }
     }
 }

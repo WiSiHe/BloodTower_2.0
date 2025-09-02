@@ -19,7 +19,7 @@ public class PauseMenu : MonoBehaviour
     [Header("Options")]
     [SerializeField] private bool lockCursorWhenPaused = false; // set true if you want a visible mouse
 
-    private bool isPaused;
+    private bool _isPaused;
 
     private void Awake()
     {
@@ -35,14 +35,14 @@ public class PauseMenu : MonoBehaviour
     private void OnDisable()
     {
         // Safety: never leave the game frozen if this object gets disabled/destroyed.
-        if (isPaused) InternalResume();
+        if (_isPaused) InternalResume();
     }
 
     private void Update()
     {
         if (WasPausePressedThisFrame())
         {
-            if (isPaused) Resume();
+            if (_isPaused) Resume();
             else Pause();
         }
     }
@@ -58,8 +58,17 @@ public class PauseMenu : MonoBehaviour
     {
         Debug.Log("[PauseMenu] Restarting level");
         Time.timeScale = 1f;
-        var active = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(active);
+        
+        // Use GameSession restart if available, otherwise restart current scene
+        if (GameSession.Instance != null)
+        {
+            GameSession.Instance.RestartFromTop();
+        }
+        else
+        {
+            var active = SceneManager.GetActiveScene().name;
+            SceneManager.LoadScene(active);
+        }
     }
 
     public void QuitToMainMenu()
@@ -73,10 +82,11 @@ public class PauseMenu : MonoBehaviour
     {
         Debug.Log("[PauseMenu] Quit Game requested");
         Time.timeScale = 1f;
+        
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #elif UNITY_WEBGL
-        // Not supported; you could show a “Thanks for playing” overlay instead.
+        // Not supported; you could show a "Thanks for playing" overlay instead.
         Debug.Log("[PauseMenu] Application.Quit not supported on WebGL.");
 #else
         Application.Quit();
@@ -88,7 +98,7 @@ public class PauseMenu : MonoBehaviour
     {
         if (pausePanel == null) return;
 
-        isPaused = true;
+        _isPaused = true;
         Time.timeScale = 0f;
         pausePanel.SetActive(true);
 
@@ -108,7 +118,7 @@ public class PauseMenu : MonoBehaviour
 
     private void InternalResume()
     {
-        isPaused = false;
+        _isPaused = false;
         Time.timeScale = 1f;
 
         if (pausePanel != null)
@@ -129,12 +139,8 @@ public class PauseMenu : MonoBehaviour
     // ---------- Input helpers ----------
     private bool WasPausePressedThisFrame()
     {
-#if ENABLE_INPUT_SYSTEM
         bool kb = Keyboard.current != null && (Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.pKey.wasPressedThisFrame);
         bool gp = Gamepad.current != null && (Gamepad.current.startButton.wasPressedThisFrame || Gamepad.current.selectButton.wasPressedThisFrame);
         return kb || gp;
-#else
-        return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P);
-#endif
     }
 }

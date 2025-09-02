@@ -1,3 +1,4 @@
+// Assets/Scripts/Monsters/MonsterMover.cs
 using UnityEngine;
 
 public class MonsterMover : MonoBehaviour
@@ -11,13 +12,18 @@ public class MonsterMover : MonoBehaviour
     public float wobbleAmplitude = 0.25f;
     public float wobbleFrequency = 1.2f;
 
+    [Header("Auto-despawn when far below camera")]
+    public float extraDespawnBelow = 3.0f;
+
     float speed;
     float baseX;
+    Camera cam;
 
     void Start()
     {
         speed = Random.Range(minSpeed, maxSpeed);
         baseX = transform.position.x;
+        cam = Camera.main;
     }
 
     void Update()
@@ -31,15 +37,20 @@ public class MonsterMover : MonoBehaviour
             float x = baseX + Mathf.Sin(Time.time * wobbleFrequency) * wobbleAmplitude;
             transform.position = new Vector3(x, transform.position.y, transform.position.z);
         }
+
+        // Despawn when well below the screen (works even if nothing is tagged Ground)
+        if (cam && cam.orthographic)
+        {
+            float bottomY = cam.transform.position.y - cam.orthographicSize - extraDespawnBelow;
+            if (transform.position.y < bottomY) Destroy(gameObject);
+        }
     }
 
-    // Clean up when off any camera
-void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.collider.CompareTag("Ground"))
         {
             Destroy(gameObject);
         }
     }
-
 }

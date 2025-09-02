@@ -7,11 +7,11 @@ using UnityEngine;
 public class BossFightManager : MonoBehaviour
 {
     [Header("Scene Refs")]
-    [SerializeField] private PlayerShove playerShove;
-    [SerializeField] private Rigidbody2D playerRB;
+    [SerializeField] private PlayerShove   playerShove;
+    [SerializeField] private Rigidbody2D   playerRB;
     [SerializeField] private BossKingController bossCtrl;
     [SerializeField] private BossKnockback bossKnock;
-    [SerializeField] private Rigidbody2D bossRB;
+    [SerializeField] private Rigidbody2D   bossRB;
 
     [Header("Kills curve anchors")]
     [SerializeField] private int parityKills    = 2;
@@ -20,30 +20,30 @@ public class BossFightManager : MonoBehaviour
     // ---------- Player shove curve (ΔV in m/s) ----------
     [Header("Player Shove")]
     [Tooltip("Lower = weaker shove at 0 kills (hard mode).")]
-    [SerializeField] private float playerDeltaV_0 = 3.0f;   // was ~3.6–4.8 → make it stingy
-    [SerializeField] private float playerDeltaV_P = 5.4f;   // parity feels fair
-    [SerializeField] private float playerDeltaV_O = 6.6f;   // overpowered feels strong
+    [SerializeField] private float playerDeltaV_0 = 3.0f;
+    [SerializeField] private float playerDeltaV_P = 5.4f;
+    [SerializeField] private float playerDeltaV_O = 6.6f;
 
     [Tooltip("Extra boost if moving into the boss.")]
-    [SerializeField] private float playerRelBoost = 0.9f;   // keep modest at baseline
+    [SerializeField] private float playerRelBoost = 0.9f;
 
     [Tooltip("Seconds between shove impulses.")]
-    [SerializeField] private float playerCD_0 = 0.22f;      // slower shoves when 0 kills
+    [SerializeField] private float playerCD_0 = 0.22f;
     [SerializeField] private float playerCD_P = 0.14f;
     [SerializeField] private float playerCD_O = 0.11f;
 
     [Header("Assist & Minimum Impulse")]
-    [SerializeField] private float pushAssist_0 = 20f;      // almost no “magnet” help at 0
+    [SerializeField] private float pushAssist_0 = 20f;
     [SerializeField] private float pushAssist_P = 90f;
     [SerializeField] private float pushAssist_O = 120f;
 
-    [SerializeField] private float minImpulse_0 = 34f;      // need a big hit to budge the king
+    [SerializeField] private float minImpulse_0 = 34f;
     [SerializeField] private float minImpulse_P = 26f;
     [SerializeField] private float minImpulse_O = 28f;
 
     // ---------- King power ----------
     [Header("King Shove & Movement")]
-    [SerializeField] private float kingShove_0 = 14f;       // hits harder at 0 kills
+    [SerializeField] private float kingShove_0 = 14f;
     [SerializeField] private float kingShove_P = 10f;
     [SerializeField] private float kingShove_O = 8.5f;
 
@@ -51,7 +51,7 @@ public class BossFightManager : MonoBehaviour
     [SerializeField] private float kingSpeed_P = 5.2f;
     [SerializeField] private float kingSpeed_O = 4.6f;
 
-    [SerializeField] private float kingAccel_0 = 42f;       // chases aggressively at 0
+    [SerializeField] private float kingAccel_0 = 42f;
     [SerializeField] private float kingAccel_P = 28f;
     [SerializeField] private float kingAccel_O = 22f;
 
@@ -66,8 +66,8 @@ public class BossFightManager : MonoBehaviour
     [SerializeField] private float bossMinSpeed_P = 9f;
     [SerializeField] private float bossMinSpeed_O = 8f;
 
-    [Tooltip("How long the king is ‘soft‑stunned’ after being hit.")]
-    [SerializeField] private float bossDisable_0 = 0.30f;   // shorter stun at 0 kills
+    [Tooltip("How long the king is ‘soft-stunned’ after being hit.")]
+    [SerializeField] private float bossDisable_0 = 0.30f;
     [SerializeField] private float bossDisable_P = 0.42f;
     [SerializeField] private float bossDisable_O = 0.48f;
 
@@ -77,16 +77,16 @@ public class BossFightManager : MonoBehaviour
     [SerializeField] private float playerMass_P = 1.6f;
     [SerializeField] private float playerMass_O = 1.6f;
 
-    [SerializeField] private float bossMass_0 = 2.8f;       // heavier king at 0 kills
+    [SerializeField] private float bossMass_0 = 2.8f;
     [SerializeField] private float bossMass_P = 2.3f;
     [SerializeField] private float bossMass_O = 2.1f;
 
     [Header("Debug")]
     [SerializeField] private bool logAppliedValues = true;
 
-    private void Reset() => Autofind();
-    private void Awake() => Autofind();
-    private void Start() => Apply();
+    private void Reset()  => Autofind();
+    private void Awake()  => Autofind();
+    private void Start()  => Apply();
 
 #if UNITY_EDITOR
     [ContextMenu("Reapply Now")] private void ReapplyNow() => Apply();
@@ -94,22 +94,30 @@ public class BossFightManager : MonoBehaviour
 
     private void Autofind()
     {
-        if (!playerShove) playerShove = FindObjectOfType<PlayerShove>(true);
+        // NEW API: FindFirstObjectByType (optionally include inactive)
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+        if (!playerShove) playerShove = Object.FindFirstObjectByType<PlayerShove>(FindObjectsInactive.Include);
+#else
+        if (!playerShove) playerShove = Object.FindObjectOfType<PlayerShove>(true);
+#endif
+
         if (!playerRB)
         {
 #if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-            var pc = FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+            var pc = Object.FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
 #else
-            var pc = FindObjectOfType<PlayerController>(true);
+            var pc = Object.FindObjectOfType<PlayerController>(true);
 #endif
-            playerRB = playerShove ? playerShove.GetComponent<Rigidbody2D>() : pc ? pc.GetComponent<Rigidbody2D>() : null;
+            playerRB = playerShove ? playerShove.GetComponent<Rigidbody2D>()
+                                   : pc ? pc.GetComponent<Rigidbody2D>() : null;
         }
+
 #if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-        if (!bossCtrl)  bossCtrl  = FindFirstObjectByType<BossKingController>(FindObjectsInactive.Include);
+        if (!bossCtrl)  bossCtrl  = Object.FindFirstObjectByType<BossKingController>(FindObjectsInactive.Include);
         if (!bossKnock) bossKnock = bossCtrl ? bossCtrl.GetComponent<BossKnockback>() : null;
         if (!bossRB)    bossRB    = bossCtrl ? bossCtrl.GetComponent<Rigidbody2D>() : null;
 #else
-        if (!bossCtrl)  bossCtrl  = FindObjectOfType<BossKingController>(true);
+        if (!bossCtrl)  bossCtrl  = Object.FindObjectOfType<BossKingController>(true);
         if (!bossKnock) bossKnock = bossCtrl ? bossCtrl.GetComponent<BossKnockback>() : null;
         if (!bossRB)    bossRB    = bossCtrl ? bossCtrl.GetComponent<Rigidbody2D>() : null;
 #endif
@@ -144,14 +152,17 @@ public class BossFightManager : MonoBehaviour
 
         // apply
         if (playerRB) playerRB.mass = mP;
+
         if (playerShove)
         {
             playerShove.SetDesign(pΔV, 0f, playerRelBoost, pCD);
 
             // set private/public fields for assist & minImpulse if they exist
             var t = typeof(PlayerShove);
-            var fAssist = t.GetField("pushAssistForce", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var fMinImp = t.GetField("minImpulse",      System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fAssist = t.GetField("pushAssistForce",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fMinImp = t.GetField("minImpulse",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (fAssist != null) fAssist.SetValue(playerShove, pAsst);
             if (fMinImp != null) fMinImp.SetValue(playerShove, pMin);
         }
@@ -159,23 +170,26 @@ public class BossFightManager : MonoBehaviour
         if (bossRB) bossRB.mass = mK;
 
         if (bossCtrl) bossCtrl.SetDesign(
-            shoveImpulse: kShv,
-            shoveCooldown: 0.35f,   // keep your current unless you expose it
-            targetSpeed: kSpd,
-            accelGain:  kAcc,
-            maxSpeed:   kMax
+            shoveImpulse:  kShv,
+            shoveCooldown: 0.35f,
+            targetSpeed:   kSpd,
+            accelGain:     kAcc,
+            maxSpeed:      kMax
         );
 
         if (bossKnock)
         {
             var t = typeof(BossKnockback);
-            var fMin = t.GetField("minHorizontalSpeed",  System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var fDis = t.GetField("defaultDisableSeconds", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fMin = t.GetField("minHorizontalSpeed",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fDis = t.GetField("defaultDisableSeconds",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (fMin != null) fMin.SetValue(bossKnock, bMinS);
             if (fDis != null) fDis.SetValue(bossKnock, bDis);
         }
 
         if (logAppliedValues)
-            Debug.Log($"[BossFightManager] Kills={kills} → PΔV={pΔV:0.00}, PCD={pCD:0.00}, Assist={pAsst}, MinImp={pMin} | KShove={kShv}, KSpd={kSpd}, KAcc={kAcc}, KMax={kMax} | BossMinSlide={bMinS}, Stun={bDis}, mP={mP}, mK={mK}");
+            Debug.Log($"[BossFightManager] Kills={kills} → PΔV={pΔV:0.00}, PCD={pCD:0.00}, Assist={pAsst}, MinImp={pMin} | " +
+                      $"KShove={kShv}, KSpd={kSpd}, KAcc={kAcc}, KMax={kMax} | BossMinSlide={bMinS}, Stun={bDis}, mP={mP}, mK={mK}");
     }
 }

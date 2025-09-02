@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 5710526088931664876}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.38, y: -4.75, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.079546, y: 0.079546, z: 0.079546}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -180,3 +180,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Arrow
   speed: 5
   lifeTime: 3
+  damage: 1
+  monsterTag: Monster
+  dragonTag: Dragon

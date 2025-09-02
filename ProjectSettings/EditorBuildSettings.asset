@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Hall1.unity
     guid: 1cd02fe46267e4307a3e603e5e09f7a5
   - enabled: 1
+    path: Assets/Scenes/Hall2.unity
+    guid: 1fa96375ba6bd4ce08b3cfdd3fcebe77
+  - enabled: 1
     path: Assets/Scenes/Tutorial.unity
     guid: 41d534729c8de4841ad0819079b38f5c
   - enabled: 1
@@ -29,9 +32,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/IsometricHall.unity
     guid: 833b197f152d0e540b4efd321824fbd7
-  - enabled: 0
-    path: Assets/Scenes/BellHop.unity
-    guid: c4ba1245d20776741bf138673eb08b4c
   - enabled: 1
     path: Assets/Scenes/MiniGame_Hopper.unity
     guid: 20f2c1b2f08c0864a8247caa57dce875
@@ -50,6 +50,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Victory_Neutral.unity
     guid: 6528e475e2814472cb10274a06cc0276
+  - enabled: 1
+    path: Assets/Scenes/TowerMash.unity
+    guid: 45f54f44fee5045f4bef3993316b7f3a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
