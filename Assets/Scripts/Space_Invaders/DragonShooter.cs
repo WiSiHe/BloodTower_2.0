@@ -55,10 +55,12 @@ public class DragonShooter : MonoBehaviour
         {
             Vector2 dir = (player.position - firePoint.position).normalized;
             float ang = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            firePoint.rotation = Quaternion.AngleAxis(ang, Vector3.forward);
+            // Add 90 degrees to make the dragon face the player (assuming dragon sprite faces right by default)
+            firePoint.rotation = Quaternion.AngleAxis(ang + 90f, Vector3.forward);
         }
 
-        currentFireball = Instantiate(fireballPrefab, firePoint.position, Quaternion.identity);
+        // Use the firePoint's rotation for the fireball
+        currentFireball = Instantiate(fireballPrefab, firePoint.position, firePoint.rotation);
 
         // Use your Fireball API
         var fb = currentFireball.GetComponent<Fireball>();

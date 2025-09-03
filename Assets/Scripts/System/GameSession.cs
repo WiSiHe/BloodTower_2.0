@@ -168,23 +168,55 @@ public class GameSession : MonoBehaviour
     // -------- Keys API --------
     public bool AddKey(string keyId)
     {
-        if (string.IsNullOrWhiteSpace(keyId)) return false;
+        if (string.IsNullOrWhiteSpace(keyId)) 
+        {
+            Debug.LogWarning("[GameSession] Attempted to add empty or null key ID.");
+            return false;
+        }
         var added = keys.Add(new StringWrapper(keyId));
         SyncSerializedKeys();
+        Debug.Log($"[GameSession] Added key '{keyId}'. Success: {added}. Total keys: {keys.Count}");
         return added;
     }
-    public bool HasKey(string keyId)       => !string.IsNullOrWhiteSpace(keyId) && keys.Contains(new StringWrapper(keyId));
+    public bool HasKey(string keyId)       
+    {
+        if (string.IsNullOrWhiteSpace(keyId)) 
+        {
+            Debug.LogWarning("[GameSession] Checking for empty or null key ID.");
+            return false;
+        }
+        bool hasKey = keys.Contains(new StringWrapper(keyId));
+        Debug.Log($"[GameSession] HasKey('{keyId}'): {hasKey}. Total keys: {keys.Count}");
+        return hasKey;
+    }
     public bool RemoveKey(string keyId)
     {
-        if (string.IsNullOrWhiteSpace(keyId)) return false;
+        if (string.IsNullOrWhiteSpace(keyId)) 
+        {
+            Debug.LogWarning("[GameSession] Attempted to remove empty or null key ID.");
+            return false;
+        }
         var removed = keys.Remove(new StringWrapper(keyId));
         SyncSerializedKeys();
+        Debug.Log($"[GameSession] Removed key '{keyId}'. Success: {removed}. Total keys: {keys.Count}");
         return removed;
     }
     public void ClearKeys()
     {
         keys.Clear();
         SyncSerializedKeys();
+    }
+    
+    // Debug helper to list all keys
+    public string[] GetAllKeys()
+    {
+        var keyArray = new string[keys.Count];
+        int i = 0;
+        foreach (var key in keys)
+        {
+            keyArray[i++] = key.Value;
+        }
+        return keyArray;
     }
     private void SyncSerializedKeys()
     {

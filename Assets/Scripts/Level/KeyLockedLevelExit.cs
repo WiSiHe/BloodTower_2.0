@@ -116,7 +116,11 @@ public class KeyLockedLevelExit : MonoBehaviour
     // ---------- Keys ----------
     private bool IsUnlocked()
     {
-        if (requiredKeyIds == null || requiredKeyIds.Count == 0) return true;
+        if (requiredKeyIds == null || requiredKeyIds.Count == 0) 
+        {
+            Debug.Log("[KeyLockedLevelExit] No keys required - door is unlocked.");
+            return true;
+        }
 
         var gs = GameSession.Instance;
         if (gs == null)
@@ -125,16 +129,45 @@ public class KeyLockedLevelExit : MonoBehaviour
             return false;
         }
 
+        Debug.Log($"[KeyLockedLevelExit] Checking keys. Required: [{string.Join(", ", requiredKeyIds)}], Mode: {requirement}");
+        Debug.Log($"[KeyLockedLevelExit] Player has {gs.KeyCount} keys total: [{string.Join(", ", gs.GetAllKeys())}]");
+
         if (requirement == RequirementMode.Any)
         {
             foreach (var id in requiredKeyIds)
-                if (!string.IsNullOrWhiteSpace(id) && gs.HasKey(id)) return true;
+            {
+                if (!string.IsNullOrWhiteSpace(id))
+                {
+                    bool hasKey = gs.HasKey(id);
+                    Debug.Log($"[KeyLockedLevelExit] Checking key '{id}': {hasKey}");
+                    if (hasKey) 
+                    {
+                        Debug.Log($"[KeyLockedLevelExit] Found required key '{id}' - door unlocked!");
+                        return true;
+                    }
+                }
+            }
+            Debug.Log("[KeyLockedLevelExit] No required keys found - door locked.");
             return false;
         }
         else // All
         {
             foreach (var id in requiredKeyIds)
-                if (string.IsNullOrWhiteSpace(id) || !gs.HasKey(id)) return false;
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    Debug.LogWarning($"[KeyLockedLevelExit] Empty key ID in required list!");
+                    return false;
+                }
+                bool hasKey = gs.HasKey(id);
+                Debug.Log($"[KeyLockedLevelExit] Checking key '{id}': {hasKey}");
+                if (!hasKey) 
+                {
+                    Debug.Log($"[KeyLockedLevelExit] Missing required key '{id}' - door locked.");
+                    return false;
+                }
+            }
+            Debug.Log("[KeyLockedLevelExit] All required keys found - door unlocked!");
             return true;
         }
     }

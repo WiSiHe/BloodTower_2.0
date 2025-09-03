@@ -42,6 +42,7 @@ public class ChildEncounter : MonoBehaviour
     private bool used;
     private float lockStartTime;
     private bool hasPrevConstraints;
+    private bool isUnlocking = false; // Prevent repeated unlock calls
     
     // Emergency unlock system
     private float emergencyKeyHoldTime = 0f;
@@ -88,9 +89,8 @@ public class ChildEncounter : MonoBehaviour
         if (!promptVisible) return;
 
         // Watchdog: if somehow we remain locked too long, unlock automatically.
-        if ((Time.unscaledTime - lockStartTime) > maxLockSeconds)
+        if ((Time.unscaledTime - lockStartTime) > maxLockSeconds && !isUnlocking)
         {
-            Debug.LogWarning($"[ChildEncounter] Watchdog unlock triggered after {maxLockSeconds} seconds!");
             ForceUnlockPlayer();
             return;
         }
@@ -104,7 +104,6 @@ public class ChildEncounter : MonoBehaviour
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) ||
                 (gp != null && (gp.bButton.wasPressedThisFrame || gp.startButton.wasPressedThisFrame)))
             {
-                Debug.Log("[ChildEncounter] Quick cancel triggered by input!");
                 ClosePromptOnly();
                 return;
             }
@@ -122,9 +121,8 @@ public class ChildEncounter : MonoBehaviour
                 if (shiftHeld && ctrlHeld)
                 {
                     emergencyKeyHoldTime += Time.unscaledDeltaTime;
-                    if (emergencyKeyHoldTime >= 1.0f && !emergencyKeysHeld)
+                    if (emergencyKeyHoldTime >= 1.0f && !emergencyKeysHeld && !isUnlocking)
                     {
-                        Debug.LogWarning("[ChildEncounter] EMERGENCY UNLOCK triggered by Shift+Ctrl!");
                         ForceUnlockPlayer();
                         emergencyKeysHeld = true;
                     }
@@ -150,9 +148,8 @@ public class ChildEncounter : MonoBehaviour
                 if (shiftHeld && altHeld && ctrlHeld)
                 {
                     emergencyKeyHoldTime += Time.unscaledDeltaTime;
-                    if (emergencyKeyHoldTime >= 2.0f && !emergencyKeysHeld)
+                    if (emergencyKeyHoldTime >= 2.0f && !emergencyKeysHeld && !isUnlocking)
                     {
-                        Debug.LogWarning("[ChildEncounter] GLOBAL EMERGENCY UNLOCK triggered by Shift+Alt+Ctrl!");
                         GlobalEmergencyUnlock();
                         emergencyKeysHeld = true;
                     }
@@ -205,7 +202,7 @@ public class ChildEncounter : MonoBehaviour
         // Walking/jumping off the child without choosing must unlock
         if (promptVisible && other.CompareTag(targetTag))
         {
-            Debug.Log("[ChildEncounter] Player exited trigger - closing prompt");
+
             ClosePromptOnly();
         }
     }
@@ -255,7 +252,7 @@ public class ChildEncounter : MonoBehaviour
             return;
         }
 
-        Debug.Log("[ChildEncounter] Closing prompt and unlocking player");
+
         promptVisible = false;
 
         // Unlock BEFORE touching UI to avoid race conditions with destruction
@@ -309,12 +306,12 @@ public class ChildEncounter : MonoBehaviour
             {
                 prevControllerEnabled = cachedController.enabled;
                 cachedController.enabled = false;
-                Debug.Log($"[ChildEncounter] Disabled controller: {cachedController.GetType().Name}");
+
             }
             else
             {
                 cachedController.enabled = prevControllerEnabled;
-                Debug.Log($"[ChildEncounter] Re-enabled controller: {cachedController.GetType().Name} (was: {prevControllerEnabled})");
+
             }
         }
         else if (lockIt)
@@ -330,7 +327,7 @@ public class ChildEncounter : MonoBehaviour
                 {
                     prevConstraints = playerRB.constraints;
                     hasPrevConstraints = true;
-                    Debug.Log($"[ChildEncounter] Stored previous constraints: {prevConstraints}");
+
                 }
 #if UNITY_6000_OR_NEWER
                 playerRB.velocity = Vector2.zero;
@@ -338,14 +335,14 @@ public class ChildEncounter : MonoBehaviour
                 playerRB.linearVelocity = Vector2.zero;
 #endif
                 playerRB.constraints = RigidbodyConstraints2D.FreezeAll;
-                Debug.Log("[ChildEncounter] Froze rigidbody constraints");
+
             }
             else
             {
                 // Restore exactly what we had; if we never stored, fallback to None
                 var restoreConstraints = hasPrevConstraints ? prevConstraints : RigidbodyConstraints2D.None;
                 playerRB.constraints = restoreConstraints;
-                Debug.Log($"[ChildEncounter] Restored rigidbody constraints to: {restoreConstraints}");
+
                 hasPrevConstraints = false; // Reset flag after restoration
             }
         }
@@ -353,13 +350,14 @@ public class ChildEncounter : MonoBehaviour
 
     private void ForceUnlockPlayer()
     {
-        // Absolute safety: never leave the player immobile
-        Debug.Log("[ChildEncounter] ForceUnlockPlayer called - emergency unlock!");
+        // Prevent repeated calls
+        if (isUnlocking) return;
+        isUnlocking = true;
         
+        // Absolute safety: never leave the player immobile
         if (cachedController != null) 
         {
             cachedController.enabled = true;
-            Debug.Log($"[ChildEncounter] Force-enabled controller: {cachedController.GetType().Name}");
         }
 
         if (playerRB != null)
@@ -368,7 +366,6 @@ public class ChildEncounter : MonoBehaviour
             // This prevents the character from falling over
             var restoreConstraints = hasPrevConstraints ? prevConstraints : RigidbodyConstraints2D.FreezeRotation;
             playerRB.constraints = restoreConstraints;
-            Debug.Log($"[ChildEncounter] Force-restored rigidbody constraints to: {restoreConstraints}");
             hasPrevConstraints = false; // Reset flag
         }
         
@@ -377,17 +374,31 @@ public class ChildEncounter : MonoBehaviour
         
         // Reset state flags
         promptVisible = false;
+        
+        // Reset unlocking flag after a short delay to allow for cleanup
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(ResetUnlockingFlag());
+        }
+        else
+        {
+            // If GameObject is inactive, reset immediately
+            isUnlocking = false;
+        }
+    }
+    
+    private IEnumerator ResetUnlockingFlag()
+    {
+        yield return new WaitForSeconds(0.1f); // Short delay to prevent immediate re-triggering
+        isUnlocking = false;
     }
     
     private void ForceCleanupUI()
     {
-        Debug.Log("[ChildEncounter] Force cleaning up UI state");
-        
         // Clear EventSystem selection to prevent stuck UI focus
         if (EventSystem.current != null)
         {
             EventSystem.current.SetSelectedGameObject(null);
-            Debug.Log("[ChildEncounter] Cleared EventSystem selection");
         }
         
         // Force hide prompt UI
@@ -396,13 +407,11 @@ public class ChildEncounter : MonoBehaviour
             promptGroup.interactable = false;
             promptGroup.blocksRaycasts = false;
             promptGroup.alpha = 0f;
-            Debug.Log("[ChildEncounter] Force-disabled prompt group");
         }
         
         if (promptCanvas)
         {
             promptCanvas.gameObject.SetActive(false);
-            Debug.Log("[ChildEncounter] Force-deactivated prompt canvas");
         }
         
         // Reset emergency unlock state
@@ -412,7 +421,8 @@ public class ChildEncounter : MonoBehaviour
     
     private void GlobalEmergencyUnlock()
     {
-        Debug.LogWarning("[ChildEncounter] GLOBAL EMERGENCY UNLOCK - Resetting all UI and player state!");
+        if (isUnlocking) return; // Prevent repeated calls
+        isUnlocking = true;
         
         // Find and unlock all players
         var players = GameObject.FindGameObjectsWithTag("Player");
@@ -422,7 +432,6 @@ public class ChildEncounter : MonoBehaviour
             if (rb != null)
             {
                 rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-                Debug.Log($"[ChildEncounter] Reset constraints for player: {player.name}");
             }
             
             var controllers = player.GetComponentsInChildren<MonoBehaviour>();
@@ -431,7 +440,6 @@ public class ChildEncounter : MonoBehaviour
                 if (controller != null && controller.GetType().Name == "PlayerController")
                 {
                     controller.enabled = true;
-                    Debug.Log($"[ChildEncounter] Re-enabled PlayerController on: {player.name}");
                 }
             }
         }
@@ -440,7 +448,6 @@ public class ChildEncounter : MonoBehaviour
         if (EventSystem.current != null)
         {
             EventSystem.current.SetSelectedGameObject(null);
-            Debug.Log("[ChildEncounter] Cleared global EventSystem selection");
         }
         
         // Force cleanup this instance
@@ -454,7 +461,15 @@ public class ChildEncounter : MonoBehaviour
         GameSession.Instance?.RecordChildSaved();
 
         ClosePromptOnly();
-        StartCoroutine(DestroyNextFrame());
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(DestroyNextFrame());
+        }
+        else
+        {
+            // If GameObject is inactive, destroy immediately
+            if (this) Destroy(gameObject);
+        }
     }
 
     public void OnChooseDrink()
@@ -467,6 +482,14 @@ public class ChildEncounter : MonoBehaviour
         }
 
         ClosePromptOnly();
-        StartCoroutine(DestroyNextFrame());
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(DestroyNextFrame());
+        }
+        else
+        {
+            // If GameObject is inactive, destroy immediately
+            if (this) Destroy(gameObject);
+        }
     }
 }

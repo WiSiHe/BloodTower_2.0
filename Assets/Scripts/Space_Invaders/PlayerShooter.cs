@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(PlayerInput))]
 public class PlayerShooter : MonoBehaviour
 {
     [Header("Shoot")]
@@ -13,18 +12,29 @@ public class PlayerShooter : MonoBehaviour
     [SerializeField] private bool canDamageDragon = false; // set by MiniGameManager when powered
 
     private float cooldown;                   // timer counts down to 0
-    private PlayerInput playerInput;
-    private InputAction attackAction;
+    private InputSystem_Actions inputActions;
 
     void Awake()
     {
-        playerInput = GetComponent<PlayerInput>();
-        attackAction = playerInput.actions.FindAction("Attack", throwIfNotFound: true);
+        inputActions = new InputSystem_Actions();
         if (!firePoint) firePoint = transform;
     }
 
-    void OnEnable()  => attackAction.performed += OnAttackPerformed;
-    void OnDisable() => attackAction.performed -= OnAttackPerformed;
+    void OnEnable()  
+    { 
+        inputActions.Enable();
+        inputActions.Player.Attack.performed += OnAttackPerformed;
+    }
+    void OnDisable() 
+    { 
+        inputActions.Player.Attack.performed -= OnAttackPerformed;
+        inputActions.Disable();
+    }
+
+    void OnDestroy()
+    {
+        inputActions?.Dispose();
+    }
 
     void Update()
     {
@@ -46,7 +56,10 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
-        var go = Instantiate(arrowPrefab, firePoint.position, firePoint.rotation);
+        // Always shoot upward (Vector2.up = 0, 1)
+        Quaternion shootRotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+        var go = Instantiate(arrowPrefab, firePoint.position, shootRotation);
+        
         // pass the powered flag into the projectile
         var arrow = go.GetComponent<Arrow>();
         if (arrow) arrow.SetCanDamageDragon(canDamageDragon);

@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f0d15fd987954f80b1f8ba7b3a7aefa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeyPickup
-  keyId: tower_key
+  keyId: hallway_key
   targetTag: Player
   onPickedUp:
     m_PersistentCalls:

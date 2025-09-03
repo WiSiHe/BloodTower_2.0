@@ -9,11 +9,13 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource jumpAudioSource;
     [SerializeField] private AudioSource dashAudioSource;
     [SerializeField] private AudioSource damageAudioSource;
+    [SerializeField] private AudioSource bounceAudioSource;
     
     [Header("Audio Clips")]
     [SerializeField] private AudioClip jumpClip;
     [SerializeField] private AudioClip dashClip;
     [SerializeField] private AudioClip damageClip;
+    [SerializeField] private AudioClip bounceClip;
     
     public static AudioManager Instance { get; private set; }
     
@@ -52,6 +54,13 @@ public class AudioManager : MonoBehaviour
             damageAudioSource.playOnAwake = false;
             damageAudioSource.volume = 0.8f;
         }
+        
+        if (bounceAudioSource == null)
+        {
+            bounceAudioSource = gameObject.AddComponent<AudioSource>();
+            bounceAudioSource.playOnAwake = false;
+            bounceAudioSource.volume = 0.6f;
+        }
     }
     
     public void PlayJumpSound()
@@ -75,6 +84,14 @@ public class AudioManager : MonoBehaviour
         if (damageClip != null && damageAudioSource != null)
         {
             damageAudioSource.PlayOneShot(damageClip);
+        }
+    }
+    
+    public void PlayBounceSound()
+    {
+        if (bounceClip != null && bounceAudioSource != null)
+        {
+            bounceAudioSource.PlayOneShot(bounceClip);
         }
     }
 }

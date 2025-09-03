@@ -178,8 +178,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32573d9bbf860793092d4806b0bb5855, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Arrow
-  speed: 5
-  lifeTime: 3
+  speed: 7
+  lifeTime: 5
   damage: 1
   monsterTag: Monster
   dragonTag: Dragon
+  poweredEffectPrefab: {fileID: 0}
+  poweredColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  poweredGlowIntensity: 10

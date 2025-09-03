@@ -106,11 +106,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b056ccdd88527538d9736bdcdf981452, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterMover
+  movementPattern: 3
   minSpeed: 0.8
   maxSpeed: 1.6
+  speedVariation: 0.3
+  speedChangeInterval: 2
   wobble: 1
   wobbleAmplitude: 0.25
   wobbleFrequency: 1.2
+  wobbleVariation: 0.5
+  spiralRadius: 1
+  spiralSpeed: 2
+  spiralTightness: 0.1
+  zigzagAmplitude: 1.5
+  zigzagFrequency: 1
+  zigzagPhase: 0
+  canChangeDirection: 1
+  directionChangeChance: 0.1
+  directionChangeInterval: 3
+  enableTrail: 1
+  trailColor: {r: 1, g: 0, b: 0, a: 1}
+  trailTime: 0.5
+  canDamagePlayer: 1
+  damageAmount: 1
+  damageCooldown: 1
+  destroyOnPlayerHit: 1
   extraDespawnBelow: 3
 --- !u!50 &3628195076197263519
 Rigidbody2D:

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,7 +7,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 8f; // Increased for more responsive movement
-    public float jumpForce = 18f; // Increased for higher jumps
+    public float jumpForce = 35f; // Increased to work with higher gravity scale (3x)
     public bool isIsometric = false;
     public bool canJump = true;
     
@@ -17,8 +18,8 @@ public class PlayerController : MonoBehaviour
     public float deceleration = 75f; // Increased for snappier stops
     [Tooltip("Additional friction when grounded to prevent sliding")]
     public float groundFriction = 10f;
-    [Tooltip("Gravity multiplier for less floaty jumps (1.0 = normal, higher = snappier)")]
-    [Range(0.5f, 3f)] public float gravityMultiplier = 1.4f;
+    [Tooltip("Gravity scale for the Rigidbody2D (higher = snappier jumps)")]
+    [Range(1f, 5f)] public float gravityScale = 3f; // Higher gravity for snappier jumps as per Game Dev Beginner article
     [Tooltip("Air control multiplier (0 = no air control, 1 = full control)")]
     [Range(0f, 1f)] public float airControl = 0.8f; // Increased for better mid-air precision
     [Tooltip("Time in seconds after leaving ground where you can still jump")]
@@ -40,13 +41,17 @@ public class PlayerController : MonoBehaviour
     [Tooltip("If true, allows dashing in the air and on ground")]
     public bool dashEnabled = true;
     [Tooltip("Dash force/magnitude (works in all directions for isometric, horizontal only for side-scroller)")]
-    public float dashForce = 15f;
+    public float dashForce = 25f; // Increased for more impactful dash
     [Tooltip("Dash duration in seconds")]
-    public float dashDuration = 0.2f;
+    public float dashDuration = 0.15f; // Slightly shorter for snappier feel
     [Tooltip("Cooldown between dashes in seconds")]
-    public float dashCooldown = 0.5f;
+    public float dashCooldown = 0.4f; // Reduced for more responsive gameplay
     [Tooltip("How much control player has during dash (0 = no control, 1 = full control)")]
-    [Range(0f, 1f)] public float dashControl = 0.3f;
+    [Range(0f, 1f)] public float dashControl = 0.2f; // Reduced for more committed dash feel
+    [Tooltip("Brief invincibility duration during dash")]
+    public float dashInvincibilityTime = 0.1f;
+    [Tooltip("Screen shake intensity during dash")]
+    public float dashScreenShake = 0.3f;
 
     [Header("Isometric")]
     public float isoFaceDeadzone = 0.15f;
@@ -59,8 +64,7 @@ public class PlayerController : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private GroundCheck2D groundCheck; // assign in Inspector (or auto-found in Awake)
     
-    [Header("Debug")]
-    [SerializeField] private bool showDebugInfo = false;
+    
     
     [Header("Collision")]
     [Tooltip("Force applied to push away from colliding objects to prevent sticking")]
@@ -87,6 +91,8 @@ public class PlayerController : MonoBehaviour
     
     // Dash state
     private bool isDashing = false;
+    private bool isDashInvincible = false;
+    private float dashInvincibilityTimer = 0f;
     
     // Bounce state
 
@@ -109,6 +115,11 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         if (groundCheck == null)
             groundCheck = GetComponentInChildren<GroundCheck2D>(true);
+            
+        // Set gravity scale for snappier jumps (Game Dev Beginner approach)
+        rb.gravityScale = gravityScale;
+        // Ensure continuous collision detection so high-speed jumps still trigger pads
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
     void OnEnable()
@@ -151,8 +162,22 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
+    private bool isBouncing = false;
+    private float bounceLockTimer = 0f; // duration to lock movement after bounce
+    
     void FixedUpdate()
     {
+        // Update bounce lock timer
+        if (bounceLockTimer > 0f)
+        {
+            bounceLockTimer -= Time.fixedDeltaTime;
+            if (bounceLockTimer <= 0f)
+            {
+                isBouncing = false;
+            }
+        }
+        
 
         
         bool groundedNow = groundCheck != null && groundCheck.IsGrounded;
@@ -204,29 +229,47 @@ public class PlayerController : MonoBehaviour
         {
             dashCooldownTimer -= Time.fixedDeltaTime;
         }
+        
+        // Update dash invincibility
+        if (isDashInvincible)
+        {
+            dashInvincibilityTimer -= Time.fixedDeltaTime;
+            if (dashInvincibilityTimer <= 0f)
+            {
+                isDashInvincible = false;
+            }
+        }
 
-        // Handle variable jump height
-        if (variableJumpHeight && isJumping && jumpInputReleased)
+        // Handle variable jump height (skip if bouncing to prevent interference)
+        if (variableJumpHeight && isJumping && jumpInputReleased && !isBouncing)
         {
             if (rb.linearVelocity.y > 0f)
+            {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
+            }
         }
         
-        // Apply gravity multiplier for less floaty jumps (subtle approach)
-        if (rb.linearVelocity.y < 0f && !trulyGrounded) // Only when falling and not grounded
+        // Set gravity scale for snappier jumps (Game Dev Beginner approach)
+        if (rb.gravityScale != gravityScale)
         {
-            // Apply a small additional downward force instead of multiplying velocity
-            rb.AddForce(Vector2.down * (gravityMultiplier - 1f) * 2f, ForceMode2D.Force);
+            rb.gravityScale = gravityScale;
         }
 
-        // Handle movement
-        if (isIsometric)
+        // Handle movement (skip if bouncing)
+        if (!isBouncing)
         {
-            HandleIsometricMovement();
+            if (isIsometric)
+            {
+                HandleIsometricMovement();
+            }
+            else
+            {
+                HandleSideScrollerMovement(groundedNow);
+            }
         }
         else
         {
-            HandleSideScrollerMovement(groundedNow);
+
         }
     }
     
@@ -259,10 +302,7 @@ public class PlayerController : MonoBehaviour
                 // FORCE STOP - completely override physics when not moving
                 rb.linearVelocity = new Vector2(0f, 0f);
                 
-                if (showDebugInfo)
-                {
-                    Debug.Log($"ISO FORCE STOP: move={move}, velocity={rb.linearVelocity}");
-                }
+
             }
             else
             {
@@ -317,10 +357,7 @@ public class PlayerController : MonoBehaviour
             
             animator.SetFloat("speed", currentSpeed);
             
-            if (showDebugInfo)
-            {
-                Debug.Log($"ISO ANIM: move={move}, speed={currentSpeed}, dirIndex={dirIndex}, isJumping=false");
-            }
+
             
             // Set X and Y velocity for isometric movement
             animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
@@ -352,47 +389,11 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // Traditional movement with strong deceleration
-            float targetVelocityX = move.x * moveSpeed;
-            float currentVelocityX = rb.linearVelocity.x;
-            
-            float velocityDifference = targetVelocityX - currentVelocityX;
-            float accelerationRate;
-            
-            if (Mathf.Abs(move.x) > 0.01f)
-            {
-                // Moving - use acceleration
-                accelerationRate = acceleration;
-            }
-            else
-            {
-                // Not moving - use very strong deceleration
-                accelerationRate = deceleration * 3f; // Triple deceleration when stopping
-            }
-            
-            // Apply air control modifier when in air
-            if (!groundedNow)
-            {
-                accelerationRate *= airControl;
-            }
-            
-            float newVelocityX = currentVelocityX + Mathf.Sign(velocityDifference) * accelerationRate * Time.fixedDeltaTime;
-            
-            // Clamp to max speed
-            newVelocityX = Mathf.Clamp(newVelocityX, -moveSpeed, moveSpeed);
-            
-            // AGGRESSIVE stop when not moving - completely override physics
-            if (Mathf.Abs(move.x) < 0.01f)
-            {
-                newVelocityX = 0f; // Force stop when no input
-                
-                if (showDebugInfo && Mathf.Abs(currentVelocityX) > 0.01f)
-                {
-                    Debug.Log($"FORCE STOP X: move.x={move.x}, currentVel={currentVelocityX}, newVel={newVelocityX}");
-                }
-            }
-            
-            rb.linearVelocity = new Vector2(newVelocityX, rb.linearVelocity.y);
+            // Direct velocity manipulation like the old code - much more responsive
+            Vector2 newVelocity;
+            newVelocity.x = move.x * moveSpeed;
+            newVelocity.y = rb.linearVelocity.y;
+            rb.linearVelocity = newVelocity;
         }
         
         FlipSprite();
@@ -434,6 +435,10 @@ public class PlayerController : MonoBehaviour
         dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
         
+        // Set dash invincibility
+        isDashInvincible = true;
+        dashInvincibilityTimer = dashInvincibilityTime;
+        
         // Set dash direction based on movement mode
         if (isIsometric)
         {
@@ -461,7 +466,7 @@ public class PlayerController : MonoBehaviour
             }
         }
         
-        // Apply dash force
+        // Apply dash force with more impact
         if (isIsometric)
         {
             // For isometric: apply force in dash direction, preserve Y velocity
@@ -475,6 +480,64 @@ public class PlayerController : MonoBehaviour
         
         // Play dash sound if available
         if (AudioManager.Instance) AudioManager.Instance.PlayDashSound();
+        
+        // Trigger dash effects
+        TriggerDashEffects();
+        
+
+    }
+    
+    void TriggerDashEffects()
+    {
+        // Screen shake effect
+        if (dashScreenShake > 0f)
+        {
+            // Try to find a camera shake component or use a simple shake
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                StartCoroutine(SimpleScreenShake(mainCam, dashScreenShake, dashDuration));
+            }
+        }
+        
+        // Set dash animation parameter (only if it exists)
+        if (animator)
+        {
+            // Check if the "Dash" parameter exists before trying to trigger it
+            foreach (AnimatorControllerParameter param in animator.parameters)
+            {
+                if (param.name == "Dash" && param.type == AnimatorControllerParameterType.Trigger)
+                {
+                    animator.SetTrigger("Dash");
+                    break;
+                }
+            }
+        }
+    }
+    
+    IEnumerator SimpleScreenShake(Camera cam, float intensity, float duration)
+    {
+        Vector3 originalPos = cam.transform.localPosition;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            float x = Random.Range(-1f, 1f) * intensity;
+            float y = Random.Range(-1f, 1f) * intensity;
+            
+            cam.transform.localPosition = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        cam.transform.localPosition = originalPos;
+    }
+    
+    // Public method to check if player is invincible (useful for other systems)
+    public bool IsInvincible()
+    {
+        return isDashInvincible;
     }
     
     void TryJump()
@@ -517,9 +580,17 @@ public class PlayerController : MonoBehaviour
 
     void DoJump()
     {
+        // Physics-based jumping as recommended by Game Dev Beginner
+        // First, cancel any existing vertical velocity for consistent jump height
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+        
+        // Apply upward force using Impulse mode for immediate effect
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        
         if (animator) animator.SetBool("isJumping", true);
         if (AudioManager.Instance) AudioManager.Instance.PlayJumpSound();
+        
+
     }
     
     void ResetAnimationParameters()
@@ -550,52 +621,35 @@ public class PlayerController : MonoBehaviour
 
     public void ExternalBounce(float force, bool resetAirJumps)
     {
-        Debug.Log($"[PlayerController] ExternalBounce called - force: {force}, isIsometric: {isIsometric}, trulyGrounded: {trulyGrounded}");
+
         
-        // Ignore in isometric mode (no jumping there)
-        if (isIsometric) 
+        if (isIsometric)
         {
-            Debug.Log("[PlayerController] Bounce ignored - in isometric mode");
             return;
         }
-        
-        Debug.Log($"[PlayerController] Before bounce - Velocity: {rb.linearVelocity}, Position: {rb.position}");
-        
-        // Force player off ground for bounce to work
-        if (trulyGrounded)
-        {
-            Debug.Log("[PlayerController] Player was grounded, lifting off ground");
-            // Move player slightly up to break ground contact
-            rb.position = new Vector2(rb.position.x, rb.position.y + 0.1f);
-        }
-        
-        // Zero vertical velocity for a crisp, consistent bounce
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
 
-        rb.AddForce(Vector2.up * force, ForceMode2D.Impulse);
-        
-        Debug.Log($"[PlayerController] After bounce - Velocity: {rb.linearVelocity}, Position: {rb.position}");
+        // Calculate initial velocity for a fixed bounce height (force = desired height)
+        // v0 = sqrt(2 * g * h), where g = Physics2D.gravity.y * gravityScale (negative)
+        float g = Physics2D.gravity.y * rb.gravityScale;
+        float v0 = Mathf.Sqrt(2f * Mathf.Abs(g) * force);
 
-        // Treat as a jump for animation & SFX
-        if (animator) animator.SetBool("isJumping", true);
-        if (AudioManager.Instance) AudioManager.Instance.PlayJumpSound();
+        // Cancel existing vertical velocity and apply exact bounce velocity
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, v0);
 
-        // Refill air jumps so the player can keep chaining bounces
+        // Reset air jumps if requested
         if (resetAirJumps)
         {
-            // This matches how we reset in ground contact
-            // (requires extraAirJumps + doubleJumpEnabled pattern from earlier)
-            // If you don't have extraAirJumps, just omit this.
-            var field = GetType().GetField("extraAirJumps");
-            var djField = GetType().GetField("doubleJumpEnabled");
-            if (field != null && djField != null && (bool)djField.GetValue(this))
-            {
-                int extra = (int)field.GetValue(this);
-                // private int airJumpsLeft; -> set via reflection or expose a method if you prefer
-                var aj = GetType().GetField("airJumpsLeft", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (aj != null) aj.SetValue(this, Mathf.Max(0, extra));
-            }
+            airJumpsLeft = Mathf.Max(0, extraAirJumps);
         }
+
+        // Set bounce lock to prevent movement override
+        isBouncing = true;
+        bounceLockTimer = 0.3f; // lock movement for 0.3 seconds (increased for more reliable bounce)
+
+
+        // Trigger jump animation & sound
+        if (animator) animator.SetBool("isJumping", true);
+        if (AudioManager.Instance) AudioManager.Instance.PlayJumpSound();
     }
 
     IsoDir GetIsoDirection(Vector2 v, bool fourWay)
@@ -636,11 +690,37 @@ public class PlayerController : MonoBehaviour
         // Apply a gentle push force to prevent sticking
         rb.AddForce(pushDirection * collisionPushForce, ForceMode2D.Force);
         
-        if (showDebugInfo)
-        {
-            Debug.Log($"Collision push: {other.name}, direction: {pushDirection}");
-        }
+
     }
+    
+    private IEnumerator ReduceGravityTemporarily()
+    {
+        // Store original gravity scale
+        float originalGravityScale = rb.gravityScale;
+        
+        // Reduce gravity for smoother bounce (less floaty)
+        rb.gravityScale = originalGravityScale * 0.6f; // 60% of normal gravity (less floaty)
+        
+        // Wait for bounce to peak (shorter duration)
+        yield return new WaitForSeconds(0.2f);
+        
+        // Gradually restore gravity
+        float restoreTime = 0.1f;
+        float elapsed = 0f;
+        
+        while (elapsed < restoreTime)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / restoreTime;
+            rb.gravityScale = Mathf.Lerp(originalGravityScale * 0.6f, originalGravityScale, progress);
+            yield return null;
+        }
+        
+        // Ensure gravity is fully restored
+        rb.gravityScale = originalGravityScale;
+    }
+    
+
 }
 
 

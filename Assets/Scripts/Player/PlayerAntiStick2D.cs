@@ -82,6 +82,20 @@ public class PlayerAntiStick2D : MonoBehaviour
 #endif
 
         // 3) Make sure we slide down a bit if we're pinned, so we don't "hang" on micro-ledges
+        // Skip this if player is bouncing (let bounce protection handle it)
+        var playerController = GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            // Use reflection to check if player is bouncing (since isBouncing is private)
+            var isBouncingField = typeof(PlayerController).GetField("isBouncing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (isBouncingField != null && (bool)isBouncingField.GetValue(playerController))
+            {
+                if (debugLogs)
+                    Debug.Log("[PlayerAntiStick2D] Skipping downslide - player is bouncing");
+                return;
+            }
+        }
+        
 #if UNITY_6000_0_OR_NEWER
         var v = rb.linearVelocity;
         if (v.y > minDownSlideSpeed) v.y = minDownSlideSpeed;

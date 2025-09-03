@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 7364795137129322710}
   - component: {fileID: 1277075694868777903}
   - component: {fileID: 7289430092951623553}
-  - component: {fileID: 8199931639635858588}
   m_Layer: 0
   m_Name: Hero
   m_TagString: Player
@@ -112,17 +111,17 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 5
-  m_Material: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
+  m_GravityScale: 3
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!70 &2790571888408417512
 CapsuleCollider2D:
@@ -173,16 +172,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86acce1927fb4f94d8d3c51c62e5455a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  moveSpeed: 6
-  jumpForce: 20
+  moveSpeed: 8
+  jumpForce: 15
   isIsometric: 0
   canJump: 1
+  acceleration: 35
+  deceleration: 75
+  groundFriction: 10
+  gravityScale: 3
+  airControl: 0.8
+  coyoteTime: 0.15
+  jumpBufferTime: 0.15
+  variableJumpHeight: 1
+  jumpCutMultiplier: 0.4
   doubleJumpEnabled: 1
   extraAirJumps: 1
+  dashEnabled: 1
+  dashForce: 15
+  dashDuration: 0.2
+  dashCooldown: 0.5
+  dashControl: 0.3
+  dashInvincibilityTime: 0.1
+  dashScreenShake: 0.3
   isoFaceDeadzone: 0.15
   isoFourWay: 0
-  groundCheck: {fileID: 5143691235027074695}
-  jumpAudio: {fileID: 0}
+  isoDecelerationMultiplier: 1.5
+  isoAccelerationMultiplier: 1.2
+  groundCheck: {fileID: 0}
+  collisionPushForce: 1
 --- !u!70 &1277075694868777903
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -193,7 +210,7 @@ CapsuleCollider2D:
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
-  m_Material: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -242,24 +259,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8199931639635858588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8979746024464649324}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2bb3758147aa54f4dbb2793a020b9a08, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerAntiStick2D
-  sideNormalDot: 0.8
-  verticalReject: 0.6
-  depenetrationPerTick: 0.0035
-  minDownSlideSpeed: -1.5
-  noFrictionMaterial: {fileID: 6200000, guid: 2a56aca0485a64b1aa358a59308b48d0, type: 2}
-  debugLogs: 0
 --- !u!1 &9105273871517281056
 GameObject:
   m_ObjectHideFlags: 0
