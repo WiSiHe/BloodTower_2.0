@@ -2,9 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
-using System.Reflection;
 
-/// Displays victory stats & wires Restart/Quit. Robust to varying GameSession field names.
+/// Displays victory stats & wires Restart/Quit buttons using GameSession data.
 public class VictoryStatsUI : MonoBehaviour
 {
     [Header("Optional Title (auto-filled from scene if empty)")]
@@ -25,12 +24,7 @@ public class VictoryStatsUI : MonoBehaviour
     [SerializeField] private string tutorialScene  = "Tutorial";
     [SerializeField] private string startMenuScene = "StartMenu";
 
-    [Header("Score Weights")]
-    [SerializeField] private int timePenaltyPerSecond = 1000;   // lower time is better
-    [SerializeField] private int bonusPerSavedChild   = 1500;
-    [SerializeField] private int penaltyPerKilledChild= 2000;
-    [SerializeField] private int sanityBonusPerPoint  = 40;
-    [SerializeField] private int baseScore            = 120000;
+    // Note: Score calculation is now handled by GameSession.CalculateScore()
 
     private void Awake()
     {
@@ -47,38 +41,71 @@ public class VictoryStatsUI : MonoBehaviour
     private void Start()
     {
         var gs = GameSession.Instance;
+        
+        if (gs == null)
+        {
+            Debug.LogWarning("[VictoryStatsUI] GameSession.Instance is null!");
+            return;
+        }
 
-        // Try multiple common names so we don't depend on exact property names.
-        float runSeconds = SafeGetFloat(gs, new[] { "RunTimeSeconds", "ElapsedSeconds", "RunSeconds", "TimerSeconds", "RunTime", "ElapsedTime" }, 0f);
-        int saved   = SafeGetInt(gs, new[] { "ChildrenSaved", "SavedChildren", "KidsSaved" }, 0);
-        int killed  = SafeGetInt(gs, new[] { "ChildrenKilled", "KidsKilled", "KilledChildren" }, 0);
-        int sanity  = SafeGetInt(gs, new[] { "CurrentSanity", "Sanity", "SanityValue", "SanityPercent" }, 50);
+        // Use the actual GameSession properties
+        float runSeconds = gs.RunTime;
+        int saved = gs.ChildrenSaved;
+        int killed = gs.ChildrenKilled;
+        float sanity = gs.Sanity;
+        int score = gs.Score;
 
+        // Display the stats
         if (timeText)   timeText.text   = $"Time: {FormatTime(runSeconds)}";
         if (savedText)  savedText.text  = $"Children Saved: {saved}";
         if (killedText) killedText.text = $"Children Consumed: {killed}";
-        if (sanityText) sanityText.text = $"Sanity: {sanity}";
+        if (sanityText) sanityText.text = $"Sanity: {sanity:F0}";
+        if (scoreText)  scoreText.text  = $"Score: {score:N0}";
 
-        long score = baseScore
-                   - Mathf.RoundToInt(runSeconds) * timePenaltyPerSecond
-                   + saved  * bonusPerSavedChild
-                   - killed * penaltyPerKilledChild
-                   + sanity * sanityBonusPerPoint;
-        if (score < 0) score = 0;
-        if (scoreText) scoreText.text = $"Score: {score:N0}";
-
+        // Set title if empty
         if (titleText && string.IsNullOrWhiteSpace(titleText.text))
         {
-            string s = SceneManager.GetActiveScene().name; // e.g., Victory_Good
-            titleText.text = s.Replace("Victory_", "").ToUpperInvariant() + " VICTORY";
+            string sceneName = SceneManager.GetActiveScene().name; // e.g., Victory_Good
+            titleText.text = sceneName.Replace("Victory_", "").ToUpperInvariant() + " VICTORY";
+        }
+        
+        Debug.Log($"[VictoryStatsUI] Displayed stats - Time: {runSeconds:F1}s, Saved: {saved}, Killed: {killed}, Sanity: {sanity:F0}, Score: {score}");
+    }
+
+    private void OnRestart()
+    {
+        Debug.Log("[VictoryStatsUI] Restart button pressed");
+        
+        // Use GameSession restart if available, otherwise fallback to direct scene load
+        if (GameSession.Instance != null)
+        {
+            GameSession.Instance.RestartFromTop();
+        }
+        else
+        {
+            LoadScene(tutorialScene);
+        }
+    }
+    
+    private void OnQuit()
+    {
+        Debug.Log("[VictoryStatsUI] Quit button pressed");
+        
+        // Use GameSession quit if available, otherwise fallback to direct scene load
+        if (GameSession.Instance != null)
+        {
+            GameSession.Instance.QuitToStartMenu();
+        }
+        else
+        {
+            LoadScene(startMenuScene);
         }
     }
 
-    private void OnRestart() => LoadScene(tutorialScene);
-    private void OnQuit()    => LoadScene(startMenuScene);
-
     private void LoadScene(string scene)
     {
+        Debug.Log($"[VictoryStatsUI] Loading scene: {scene}");
+        
 #if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
         var fader = Object.FindFirstObjectByType<SceneFader>(FindObjectsInactive.Include);
 #else
@@ -95,64 +122,5 @@ public class VictoryStatsUI : MonoBehaviour
         return $"{s / 60:00}:{s % 60:00}";
     }
 
-    // ---------- Reflection helpers ----------
-    private static int SafeGetInt(object obj, string[] names, int fallback)
-    {
-        if (obj == null) return fallback;
-        var t = obj.GetType();
-        foreach (var n in names)
-        {
-            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
-            if (p != null && p.CanRead)
-            {
-                try { return ConvertToInt(p.GetValue(obj)); } catch { }
-            }
-            var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
-            if (f != null)
-            {
-                try { return ConvertToInt(f.GetValue(obj)); } catch { }
-            }
-        }
-        return fallback;
-    }
 
-    private static float SafeGetFloat(object obj, string[] names, float fallback)
-    {
-        if (obj == null) return fallback;
-        var t = obj.GetType();
-        foreach (var n in names)
-        {
-            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.Instance);
-            if (p != null && p.CanRead)
-            {
-                try { return ConvertToFloat(p.GetValue(obj)); } catch { }
-            }
-            var f = t.GetField(n, BindingFlags.Public | BindingFlags.Instance);
-            if (f != null)
-            {
-                try { return ConvertToFloat(f.GetValue(obj)); } catch { }
-            }
-        }
-        return fallback;
-    }
-
-    private static int ConvertToInt(object v)
-    {
-        if (v == null) return 0;
-        if (v is int i) return i;
-        if (v is float f) return Mathf.RoundToInt(f);
-        if (v is double d) return Mathf.RoundToInt((float)d);
-        if (int.TryParse(v.ToString(), out var parsed)) return parsed;
-        return 0;
-    }
-
-    private static float ConvertToFloat(object v)
-    {
-        if (v == null) return 0f;
-        if (v is float f) return f;
-        if (v is int i) return i;
-        if (v is double d) return (float)d;
-        if (float.TryParse(v.ToString(), out var parsed)) return parsed;
-        return 0f;
-    }
 }

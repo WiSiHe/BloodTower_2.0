@@ -2,84 +2,50 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public class BounceBell2D : MonoBehaviour
+public class BounceBell : MonoBehaviour
 {
-	[Header("Bounce")]
-	public float bounceImpulse = 12f;
-	public bool resetAirJumps = true;
+    [Header("Bounce Settings")]
+    public float bounceForce = 60f; // Increased to work with higher gravity scale
+    public bool resetAirJumps = true;
+    
+    [Header("Trigger Settings")]
+    // No entry speed checks: any contact triggers bounce
+    
+    [Header("Cooldown")]
+    public float cooldown = 0.02f; // Very short cooldown for responsive bouncing
+    
+    [Header("Effects")]
+    public AudioSource sfx;
+    public ParticleSystem hitVfx;
+    
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        
+        if (!other.CompareTag("Player")) return;
+        
+        var player = other.GetComponentInParent<PlayerController>();
+        if (player == null) return;
+        
+        var rb = other.attachedRigidbody;
+        if (rb == null) return;
+        
+        // No requirement: bounce on any trigger enter
+        
 
-	[Tooltip("Require the player to be moving downward to trigger (prevents side hits).")]
-	public bool requireDownwardEntry = true;
-	public float minDownwardSpeed = -0.5f;
+        
+        // Apply the bounce
+        player.ExternalBounce(bounceForce, resetAirJumps);
+        
+        // Play effects
+        if (sfx) sfx.Play();
+        if (hitVfx) hitVfx.Play();
+        
+        // Play bounce sound via AudioManager
+        if (AudioManager.Instance) 
+        {
+            AudioManager.Instance.PlayBounceSound();
+        }
 
-	[Header("Flow")]
-	[Tooltip("Prevent double-triggering on the same frame.")]
-	public float cooldown = 0.05f;
-	public bool oneUse = false;
-	public float respawnDelay = 10f;   // time before coming back
-
-	[Header("FX (optional)")]
-	public AudioSource sfx;
-	public ParticleSystem hitVfx;
-
-	private bool _cooling;
-	private Collider2D _collider;
-	private SpriteRenderer _renderer; // assumes a sprite, adjust if mesh/other
-
-	void Awake()
-	{
-		_collider = GetComponent<Collider2D>();
-		_renderer = GetComponent<SpriteRenderer>();
-	}
-
-	void Reset()
-	{
-		var col = GetComponent<Collider2D>();
-		col.isTrigger = true;
-	}
-
-	void OnTriggerEnter2D(Collider2D other)
-	{
-		if (_cooling) return;
-
-		// Find the PlayerController on the root or parent
-		var player = other.GetComponentInParent<PlayerController>();
-		if (player == null) return;
-
-		var rb = other.attachedRigidbody;
-		if (requireDownwardEntry && rb != null && rb.linearVelocity.y > minDownwardSpeed) return;
-
-		_cooling = true;
-
-		// Do the bounce
-		player.ExternalBounce(bounceImpulse, resetAirJumps);
-
-		if (sfx) sfx.Play();
-		if (hitVfx) hitVfx.Play();
-
-		if (oneUse)
-		{
-			// Optional: delay destroy to let SFX/VFX fire
-			Destroy(gameObject, 0.02f);
-		}
-		else
-		{
-			StartCoroutine(DisappearAndRespawn());
-		}
-	}
-
-	IEnumerator DisappearAndRespawn()
-	{
-		// Disable interaction & visuals
-		_collider.enabled = false;
-		if (_renderer) _renderer.enabled = false;
-
-		yield return new WaitForSeconds(respawnDelay);
-
-		// Re-enable
-		_collider.enabled = true;
-		if (_renderer) _renderer.enabled = true;
-
-		_cooling = false;
-	}
+    }
+    
 }

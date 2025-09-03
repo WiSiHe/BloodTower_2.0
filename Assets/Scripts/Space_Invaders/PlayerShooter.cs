@@ -1,41 +1,44 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(PlayerInput))]
 public class PlayerShooter : MonoBehaviour
 {
     [Header("Shoot")]
-    public GameObject arrowPrefab;
-    public Transform firePoint;
-    public float fireCooldown = 5f;   // seconds between shots
+    [SerializeField] private GameObject arrowPrefab;
+    [SerializeField] private Transform  firePoint;
+    [SerializeField] private float      fireCooldown = 0.25f; // faster feel for minigame
 
-    float cooldown;                   // timer counts down to 0
-    PlayerInput playerInput;
-    InputAction attackAction;
+    [Header("Powered state")]
+    [SerializeField] private bool canDamageDragon = false; // set by MiniGameManager when powered
+
+    private float cooldown;                   // timer counts down to 0
+    private InputSystem_Actions inputActions;
 
     void Awake()
     {
-        playerInput = GetComponent<PlayerInput>();
-
-        // Find the "Attack" action in the assigned actions asset/map.
-        // If it's under a map called "Player", "Player/Attack" also works.
-        attackAction = playerInput.actions.FindAction("Attack", throwIfNotFound: true);
+        inputActions = new InputSystem_Actions();
+        if (!firePoint) firePoint = transform;
     }
 
-    void OnEnable()
-    {
-        attackAction.performed += OnAttackPerformed;
+    void OnEnable()  
+    { 
+        inputActions.Enable();
+        inputActions.Player.Attack.performed += OnAttackPerformed;
+    }
+    void OnDisable() 
+    { 
+        inputActions.Player.Attack.performed -= OnAttackPerformed;
+        inputActions.Disable();
     }
 
-    void OnDisable()
+    void OnDestroy()
     {
-        attackAction.performed -= OnAttackPerformed;
+        inputActions?.Dispose();
     }
 
     void Update()
     {
-        if (cooldown > 0f)
-            cooldown -= Time.deltaTime;
+        if (cooldown > 0f) cooldown -= Time.deltaTime;
     }
 
     void OnAttackPerformed(InputAction.CallbackContext ctx)
@@ -46,19 +49,27 @@ public class PlayerShooter : MonoBehaviour
 
     void Shoot()
     {
-        // Block if we're still cooling down
-        if (cooldown > 0f)
-            return;
-
+        if (cooldown > 0f) return;
         if (!arrowPrefab || !firePoint)
         {
-            Debug.LogWarning("Assign arrowPrefab + firePoint");
+            Debug.LogWarning("[PlayerShooter] Assign arrowPrefab + firePoint");
             return;
         }
 
-        Instantiate(arrowPrefab, firePoint.position, Quaternion.identity);
+        // Always shoot upward (Vector2.up = 0, 1)
+        Quaternion shootRotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+        var go = Instantiate(arrowPrefab, firePoint.position, shootRotation);
+        
+        // pass the powered flag into the projectile
+        var arrow = go.GetComponent<Arrow>();
+        if (arrow) arrow.SetCanDamageDragon(canDamageDragon);
 
-        // Reset cooldown
         cooldown = fireCooldown;
+    }
+
+    /// Called by MiniGameManager when the player becomes powered.
+    public void SetPowered(bool powered)
+    {
+        canDamageDragon = powered;
     }
 }

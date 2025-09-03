@@ -27,6 +27,12 @@ public class BlueGoat : MonoBehaviour
     public float buckLateralImpulse = 2f;
     public float forcedKnockoffChance = 0.3f;
     public float jointBreakForce = 150f;
+    
+    [Header("Collision")]
+    [Tooltip("Force applied to push away colliding players to prevent sticking")]
+    public float pushForce = 2f;
+    [Tooltip("Layers that should be pushed away (e.g., Player layer)")]
+    public LayerMask pushLayers = -1;
 
     private Rigidbody2D rb;
     private float actionTimer;
@@ -39,20 +45,20 @@ public class BlueGoat : MonoBehaviour
 
     private bool isFacingRight = true;
 
-    private GameObject currentRider;
-    private Rigidbody2D riderRB;
-    private FixedJoint2D riderJoint;
-    private float buckTimer;
-    private Animator anim;
-    private SpriteRenderer sr;
+    private GameObject _currentRider;
+    private Rigidbody2D _riderRB;
+    private FixedJoint2D _riderJoint;
+    private float _buckTimer;
+    private Animator _anim;
+    private SpriteRenderer _sr;
 
     void Start()
     {
-        anim = GetComponent<Animator>();
-        if (anim) anim.SetBool("HasRider", false);
+        _anim = GetComponent<Animator>();
+        if (_anim) _anim.SetBool("HasRider", false);
 
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponentInChildren<SpriteRenderer>();
+        _sr = GetComponentInChildren<SpriteRenderer>();
 
         if (!saddlePoint)
             Debug.LogWarning("[BlueGoat] Assign saddlePoint in the inspector.");
@@ -67,7 +73,7 @@ public class BlueGoat : MonoBehaviour
     void Update()
     {
         actionTimer -= Time.deltaTime;
-        buckTimer -= Time.deltaTime;
+        _buckTimer -= Time.deltaTime;
 
         if (actionTimer <= 0f) ChooseNewAction();
 
@@ -79,30 +85,38 @@ public class BlueGoat : MonoBehaviour
             // Top-down: drive both X and Y (normalize to keep speed consistent on diagonals)
             targetVelocity = isoDirection * moveSpeed;
 
-#if UNITY_6000_0_OR_NEWER
-            rb.linearVelocity = targetVelocity;
-#else
-            rb.velocity = targetVelocity;
-#endif
+            // Anti-sliding: force stop when idle
+            if (isoDirection.sqrMagnitude < 0.01f)
+            {
+                rb.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                rb.linearVelocity = targetVelocity;
+            }
         }
         else
         {
             // Side-scroller: only X movement, keep existing Y velocity (gravity/jumps/buck)
-#if UNITY_6000_0_OR_NEWER
-            rb.linearVelocity = new Vector2(moveDirection * moveSpeed, rb.linearVelocity.y);
-#else
-            rb.velocity = new Vector2(moveDirection * moveSpeed, rb.velocity.y);
-#endif
+            // Anti-sliding: force stop when idle
+            if (moveDirection == 0)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+            else
+            {
+                rb.linearVelocity = new Vector2(moveDirection * moveSpeed, rb.linearVelocity.y);
+            }
         }
 
         FlipSprite(isIsometricMovement ? isoDirection.x : moveDirection);
 
         HandleMountInput();
 
-        if (currentRider && saddlePoint)
-            currentRider.transform.position = saddlePoint.position;
+        if (_currentRider && saddlePoint)
+            _currentRider.transform.position = saddlePoint.position;
 
-        if (currentRider && buckTimer <= 0f)
+        if (_currentRider && _buckTimer <= 0f)
         {
             Buck();
             ResetBuckTimer();
@@ -144,13 +158,13 @@ public class BlueGoat : MonoBehaviour
         if (xDir > 0.01f && !isFacingRight)
         {
             isFacingRight = true;
-            if (sr) sr.flipX = false;
+            if (_sr) _sr.flipX = false;
             else { var s = transform.localScale; s.x = Mathf.Abs(s.x); transform.localScale = s; }
         }
         else if (xDir < -0.01f && isFacingRight)
         {
             isFacingRight = false;
-            if (sr) sr.flipX = true;
+            if (_sr) _sr.flipX = true;
             else { var s = transform.localScale; s.x = -Mathf.Abs(s.x); transform.localScale = s; }
         }
     }
@@ -159,7 +173,7 @@ public class BlueGoat : MonoBehaviour
     {
         if (!MountPressedThisFrame()) return;
 
-        if (currentRider == null)
+        if (_currentRider == null)
         {
             GameObject player = FindClosestPlayerWithinRange();
             if (player != null) Mount(player);
@@ -203,93 +217,95 @@ public class BlueGoat : MonoBehaviour
 
     public void Mount(GameObject rider)
     {
-        if (currentRider != null) return;
+        if (_currentRider != null) return;
 
-        currentRider = rider;
-        riderRB = rider.GetComponent<Rigidbody2D>();
-        if (riderRB == null)
+        _currentRider = rider;
+        _riderRB = rider.GetComponent<Rigidbody2D>();
+        if (_riderRB == null)
         {
             Debug.LogWarning("Rider has no Rigidbody2D; adding one for mounting.");
-            riderRB = rider.AddComponent<Rigidbody2D>();
+            _riderRB = rider.AddComponent<Rigidbody2D>();
         }
 
-        riderJoint = currentRider.AddComponent<FixedJoint2D>();
-        riderJoint.connectedBody = rb;
-        riderJoint.autoConfigureConnectedAnchor = false;
-        riderJoint.anchor = Vector2.zero;
-        riderJoint.connectedAnchor = Vector2.zero;
-        riderJoint.enableCollision = false;
-        riderJoint.breakForce = jointBreakForce;
+        _riderJoint = _currentRider.AddComponent<FixedJoint2D>();
+        _riderJoint.connectedBody = rb;
+        _riderJoint.autoConfigureConnectedAnchor = false;
+        _riderJoint.anchor = Vector2.zero;
+        _riderJoint.connectedAnchor = Vector2.zero;
+        _riderJoint.enableCollision = false;
+        _riderJoint.breakForce = jointBreakForce;
 
-        if (saddlePoint) currentRider.transform.position = saddlePoint.position;
-#if UNITY_6000_0_OR_NEWER
-        riderRB.linearVelocity = Vector2.zero;
-#else
-        riderRB.velocity = Vector2.zero;
-#endif
+        if (saddlePoint) _currentRider.transform.position = saddlePoint.position;
+        _riderRB.linearVelocity = Vector2.zero;
 
-        if (anim) anim.SetBool("HasRider", true);
+        if (_anim) _anim.SetBool("HasRider", true);
     }
 
     public void Dismount(bool knockedOff)
     {
-        if (currentRider == null) return;
+        if (_currentRider == null) return;
 
-        if (riderJoint) Destroy(riderJoint);
+        if (_riderJoint) Destroy(_riderJoint);
 
-        if (knockedOff && riderRB)
+        if (knockedOff && _riderRB)
         {
-#if UNITY_6000_0_OR_NEWER
-            riderRB.AddForce(new Vector2(Random.Range(-1f, 1f) * 3f, 4f), ForceMode2D.Impulse);
-#else
-            riderRB.AddForce(new Vector2(Random.Range(-1f, 1f) * 3f, 4f), ForceMode2D.Impulse);
-#endif
+            _riderRB.AddForce(new Vector2(Random.Range(-1f, 1f) * 3f, 4f), ForceMode2D.Impulse);
         }
 
-        if (anim) anim.SetBool("HasRider", false);
+        if (_anim) _anim.SetBool("HasRider", false);
 
-        currentRider = null;
-        riderRB = null;
-        riderJoint = null;
+        _currentRider = null;
+        _riderRB = null;
+        _riderJoint = null;
     }
 
     void OnDisable()
     {
-        if (anim) anim.SetBool("HasRider", false);
+        if (_anim) _anim.SetBool("HasRider", false);
     }
 
     void ResetBuckTimer()
     {
-        buckTimer = Random.Range(minBuckInterval, maxBuckInterval);
+        _buckTimer = Random.Range(minBuckInterval, maxBuckInterval);
     }
 
     void Buck()
     {
-#if UNITY_6000_0_OR_NEWER
         rb.AddForce(Vector2.up * buckUpwardImpulse, ForceMode2D.Impulse);
-#else
-        rb.AddForce(Vector2.up * buckUpwardImpulse, ForceMode2D.Impulse);
-#endif
 
         float side = Random.value < 0.5f ? -1f : 1f;
-#if UNITY_6000_0_OR_NEWER
         rb.AddForce(new Vector2(side * buckLateralImpulse, 0f), ForceMode2D.Impulse);
-#else
-        rb.AddForce(new Vector2(side * buckLateralImpulse, 0f), ForceMode2D.Impulse);
-#endif
 
-        if (riderRB)
+        if (_riderRB)
         {
-#if UNITY_6000_0_OR_NEWER
-            riderRB.AddForce(new Vector2(side * buckLateralImpulse, buckUpwardImpulse * 0.75f), ForceMode2D.Impulse);
-#else
-            riderRB.AddForce(new Vector2(side * buckLateralImpulse, buckUpwardImpulse * 0.75f), ForceMode2D.Impulse);
-#endif
+            _riderRB.AddForce(new Vector2(side * buckLateralImpulse, buckUpwardImpulse * 0.75f), ForceMode2D.Impulse);
         }
 
         if (Random.value < forcedKnockoffChance)
         {
             Dismount(true);
+        }
+    }
+    
+    void OnCollisionStay2D(Collision2D collision)
+    {
+        // Only push if not mounted and collision is with a pushable layer
+        if (_currentRider != null) return;
+        
+        GameObject other = collision.gameObject;
+        if (((1 << other.layer) & pushLayers) == 0) return;
+        
+        // Don't push the current rider
+        if (other == _currentRider) return;
+        
+        // Calculate push direction (away from goat)
+        Vector2 pushDirection = (other.transform.position - transform.position).normalized;
+        
+        // Apply push force to the other object
+        Rigidbody2D otherRB = other.GetComponent<Rigidbody2D>();
+        if (otherRB != null)
+        {
+            otherRB.AddForce(pushDirection * pushForce, ForceMode2D.Force);
         }
     }
 }

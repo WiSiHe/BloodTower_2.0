@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4203523287319104011}
   - component: {fileID: 6359694811653459966}
   - component: {fileID: 7308901785433611591}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: StarBell
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -139,12 +139,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d7cbcdcc4430e345bad2f4a7372aac7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BounceBell2D
-  bounceImpulse: 42
+  m_EditorClassIdentifier: Assembly-CSharp::BounceBell
+  bounceForce: 15
   resetAirJumps: 1
-  requireDownwardEntry: 1
-  minDownwardSpeed: -0.5
-  cooldown: 0.05
-  oneUse: 0
+  cooldown: 0.02
   sfx: {fileID: 0}
   hitVfx: {fileID: 0}

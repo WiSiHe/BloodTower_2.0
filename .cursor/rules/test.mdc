@@ -1,0 +1,49 @@
+---
+description: Blodtårnet Unity C# coding rules
+globs:
+  - '**/*.cs'
+alwaysApply: true
+---
+
+# Coding Rules for Unity C#
+
+## Formatting
+
+- Use **4 spaces** for indentation, never tabs.
+- Use **LF** line endings.
+- Each file must end with a newline.
+
+## Naming
+
+- **Private fields** → `_camelCase` (leading underscore).
+- **Public fields, properties, methods, classes** → `PascalCase`.
+- **Constants** → `ALL_CAPS_WITH_UNDERSCORES`.
+- **Events** → start with `On` (e.g., `OnHealthChanged`).
+
+## Unity Practices
+
+- Do **not** use `GameObject.Find` or `FindObjectOfType` in gameplay. Use **[SerializeField] private** references or the `GameSession` singleton.
+- Use **[SerializeField] private** instead of public fields for inspector exposure.
+- Avoid heavy logic in `Update()`. Prefer **events** or **coroutines**.
+- One clear responsibility per MonoBehaviour script.
+- Use **ScriptableObjects** for data (stats, configs).
+
+## Code Style
+
+- Always use braces `{}` even for single-line `if`, `else`, `for`, `while`.
+- Prefer **early returns** to reduce nesting.
+- Add a short **summary comment** at the top of every class (what it does).
+- No magic numbers: expose constants or ScriptableObject values.
+- Keep methods focused and reasonably short (~40 lines max).
+
+## Safety
+
+- Null-check serialized references in `Awake()` or `OnEnable()`.
+- Use `Debug.LogError` when required references are missing.
+- Mark non-editable fields `[NonSerialized]` or keep them private without `[SerializeField]`.
+
+## Performance
+
+- No per-frame allocations in `Update()`.
+- Cache components in `Awake()`/`Start()`.
+- Use object pooling for frequently spawned objects (like projectiles).

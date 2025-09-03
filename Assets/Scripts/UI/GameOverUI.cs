@@ -59,9 +59,15 @@ public class GameOverUI : MonoBehaviour
 
     public void OnRestartPressed()
     {
-        if (GameSession.Instance != null) GameSession.Instance.RestartFromTop();
+        Debug.Log("[GameOverUI] OnRestartPressed called");
+        if (GameSession.Instance != null) 
+        {
+            Debug.Log("[GameOverUI] GameSession found, calling RestartFromTop");
+            GameSession.Instance.RestartFromTop();
+        }
         else
         {
+            Debug.Log($"[GameOverUI] GameSession not found, loading scene directly: {tutorialSceneName}");
             Time.timeScale = 1f;
             UnityEngine.SceneManagement.SceneManager.LoadScene(tutorialSceneName);
         }
