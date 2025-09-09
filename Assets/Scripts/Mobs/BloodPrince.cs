@@ -118,62 +118,95 @@ public class BloodprinceAI : MonoBehaviour
             desiredVel = moveDir * wanderSpeed;
         }
 
-        // 2) Collision-safe move with rb.Cast
-        Vector2 from = rb.position;
-        Vector2 to   = from + desiredVel * Time.fixedDeltaTime;
-        Vector2 delta = to - from;
-        float distance = delta.magnitude;
-
-        if (distance > 0f)
+        // 2) Use velocity-based movement for proper physics collision
+        rb.linearVelocity = desiredVel;
+        
+        // 3) Check for player collision using overlap detection (backup method)
+        CheckForPlayerCollision();
+    }
+    
+    void CheckForPlayerCollision()
+    {
+        // Backup collision detection using overlap circle
+        if (player && _damageCooldownTimer <= 0f)
         {
-            Vector2 dir = delta / distance;
-            int hits = rb.Cast(dir, castFilter, castHits, distance + skinWidth);
-
-            if (hits > 0)
+            float distanceToPlayer = Vector2.Distance(rb.position, (Vector2)player.position);
+            float collisionRadius = GetComponent<Collider2D>().bounds.size.magnitude * 0.5f;
+            
+            if (distanceToPlayer <= collisionRadius * 1.5f) // Slightly larger detection radius
             {
-                float shortest = distance;
-                Vector2 normalSum = Vector2.zero;
-
-                for (int i = 0; i < hits; i++)
-                {
-                    var h = castHits[i];
-                    if (!h.collider) continue;
-                    shortest = Mathf.Min(shortest, Mathf.Max(0f, h.distance - skinWidth));
-                    normalSum += h.normal;
-                }
-
-                rb.MovePosition(from + dir * shortest);
-
-                // Bounce the wander direction if we hit something while NOT chasing
-                if (!player || Vector2.Distance(rb.position, (Vector2)player.position) > detectionRadius)
-                {
-                    if (normalSum.sqrMagnitude > 0.0001f)
-                    {
-                        Vector2 avgNormal = (normalSum / hits).normalized;
-                        Vector2 reflected = Vector2.Reflect(moveDir, avgNormal).normalized;
-                        moveDir = (reflected * (1f - bounceKeepFactor) + moveDir * bounceKeepFactor).normalized;
-                        wanderTimer = Random.Range(0.35f, 0.75f);
-                    }
-                }
-            }
-            else
-            {
-                rb.MovePosition(to);
+                Debug.Log($"[BloodPrince] Overlap collision detected with player at distance: {distanceToPlayer}");
+                DealDamageToPlayer(player.gameObject);
             }
         }
     }
     
     void OnCollisionEnter2D(Collision2D collision)
     {
+        Debug.Log($"[BloodPrince] Collision detected with: {collision.gameObject.name}, Tag: {collision.gameObject.tag}");
+        
         // Check if we collided with the player and can deal damage
         if (collision.gameObject.CompareTag("Player") && _damageCooldownTimer <= 0f)
         {
+            Debug.Log("[BloodPrince] Player collision confirmed, dealing damage!");
             DealDamageToPlayer(collision.gameObject);
         }
+        // Handle wall collision for bouncing behavior
+        else if (collision.gameObject.layer == wallLayers || collision.gameObject.CompareTag("Wall"))
+        {
+            HandleWallCollision(collision);
+        }
+    }
+    
+    void OnCollisionStay2D(Collision2D collision)
+    {
+        // Handle wall collision for bouncing behavior
+        if (collision.gameObject.layer == wallLayers || collision.gameObject.CompareTag("Wall"))
+        {
+            HandleWallCollision(collision);
+        }
+    }
+    
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        Debug.Log($"[BloodPrince] Trigger detected with: {other.name}, Tag: {other.tag}");
+        
+        // Also check for trigger-based collision with player
+        if (other.CompareTag("Player") && _damageCooldownTimer <= 0f)
+        {
+            Debug.Log("[BloodPrince] Player trigger confirmed, dealing damage!");
+            DealDamageToPlayer(other.gameObject);
+        }
+    }
+    
+    void HandleWallCollision(Collision2D collision)
+    {
+        // Only bounce if we're wandering (not chasing player)
+        if (player && Vector2.Distance(rb.position, (Vector2)player.position) <= detectionRadius)
+        {
+            return; // Don't bounce when chasing player
+        }
+        
+        // Calculate reflection direction
+        Vector2 normal = collision.contacts[0].normal;
+        Vector2 reflected = Vector2.Reflect(moveDir, normal).normalized;
+        
+        // Apply bounce with some randomness to avoid getting stuck
+        Vector2 randomOffset = new Vector2(
+            Random.Range(-0.2f, 0.2f), 
+            Random.Range(-0.2f, 0.2f)
+        );
+        
+        moveDir = (reflected + randomOffset).normalized;
+        wanderTimer = Random.Range(0.5f, 1.0f); // Change direction soon
+        
+        Debug.Log($"[BloodPrince] Bounced off wall. New direction: {moveDir}");
     }
     
     void DealDamageToPlayer(GameObject playerObj)
     {
+        Debug.Log($"[BloodPrince] Attempting to deal damage to player: {playerObj.name}");
+        
         // Use the global GameSession to deal damage
         if (GameSession.Instance != null)
         {
@@ -185,11 +218,24 @@ public class BloodprinceAI : MonoBehaviour
             _backoffTimer = backoffDuration;
             _damageCooldownTimer = damageCooldown;
             
-            Debug.Log($"[BloodPrince] Dealt {damageAmount} damage to player via GameSession. Backing off for {backoffDuration}s");
+            Debug.Log($"[BloodPrince] SUCCESS: Dealt {damageAmount} damage to player via GameSession. Backing off for {backoffDuration}s");
+            
+            // Try to trigger damage feedback on the player
+            var knockback = playerObj.GetComponent<PlayerKnockback>();
+            if (knockback != null)
+            {
+                Vector2 knockbackDirection = (playerObj.transform.position - transform.position).normalized;
+                knockback.ApplyKnockback(knockbackDirection, 1f);
+                Debug.Log("[BloodPrince] Applied knockback to player");
+            }
+            else
+            {
+                Debug.LogWarning("[BloodPrince] PlayerKnockback component not found on player");
+            }
         }
         else
         {
-            Debug.LogWarning("[BloodPrince] GameSession.Instance is null! Cannot deal damage.");
+            Debug.LogError("[BloodPrince] GameSession.Instance is null! Cannot deal damage.");
         }
     }
 

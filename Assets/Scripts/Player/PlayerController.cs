@@ -249,10 +249,14 @@ public class PlayerController : MonoBehaviour
             }
         }
         
-        // Set gravity scale for snappier jumps (Game Dev Beginner approach)
-        if (rb.gravityScale != gravityScale)
+        // Set gravity scale - disable for isometric, enable for side-scroller
+        if (isIsometric)
         {
-            rb.gravityScale = gravityScale;
+            rb.gravityScale = 0f; // No gravity in isometric mode
+        }
+        else
+        {
+            rb.gravityScale = gravityScale; // Normal gravity for side-scroller
         }
 
         // Handle movement (skip if bouncing)
@@ -280,7 +284,6 @@ public class PlayerController : MonoBehaviour
         {
             // During dash, maintain dash velocity with limited control
             Vector2 dashVelocity = dashDirection * dashForce;
-            Vector2 currentVelocity = rb.linearVelocity;
             
             // Allow some control during dash
             if (move.sqrMagnitude > 0.01f)
@@ -289,40 +292,13 @@ public class PlayerController : MonoBehaviour
                 dashDirection = move.normalized;
             }
             
-            // Blend between current velocity and dash velocity
-            rb.linearVelocity = Vector2.Lerp(currentVelocity, dashVelocity, dashControl);
+            rb.linearVelocity = dashVelocity;
         }
         else
         {
-            // AGGRESSIVE ANTI-SLIDING for isometric (same as side-scroller)
-            bool shouldBeMoving = move.sqrMagnitude > 0.01f;
-            
-            if (!shouldBeMoving)
-            {
-                // FORCE STOP - completely override physics when not moving
-                rb.linearVelocity = new Vector2(0f, 0f);
-                
-
-            }
-            else
-            {
-                // Normal movement when input is active
-                Vector2 targetVelocity = move * moveSpeed;
-                Vector2 currentVelocity = rb.linearVelocity;
-                
-                Vector2 velocityDifference = targetVelocity - currentVelocity;
-                float accelerationRate = acceleration * isoAccelerationMultiplier;
-                
-                Vector2 newVelocity = currentVelocity + velocityDifference.normalized * accelerationRate * Time.fixedDeltaTime;
-                
-                // Clamp to max speed
-                if (newVelocity.magnitude > moveSpeed)
-                {
-                    newVelocity = newVelocity.normalized * moveSpeed;
-                }
-                
-                rb.linearVelocity = newVelocity;
-            }
+            // Isometric movement - full 2D control, no gravity
+            Vector2 targetVelocity = move * moveSpeed;
+            rb.linearVelocity = targetVelocity;
         }
         
         if (move.sqrMagnitude > isoFaceDeadzone * isoFaceDeadzone)
@@ -469,8 +445,8 @@ public class PlayerController : MonoBehaviour
         // Apply dash force with more impact
         if (isIsometric)
         {
-            // For isometric: apply force in dash direction, preserve Y velocity
-            rb.linearVelocity = new Vector2(dashDirection.x * dashForce, dashDirection.y * dashForce);
+            // For isometric: apply force in dash direction
+            rb.linearVelocity = dashDirection * dashForce;
         }
         else
         {
